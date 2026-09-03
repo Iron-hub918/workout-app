@@ -428,6 +428,56 @@ async function runWeeklyEngine(){
   return { avgs, entry, bf };
 }
 
+// Recompute calories/PFC/target-rate range when the user manually switches
+// goal from settings. TDEE itself is left untouched (it's a property of the
+// body/activity level, not the goal); only the goal-dependent quantities
+// (calorie multiplier, PFC ratios, target-rate range) are recalculated.
+// Recompute TDEE/calories/PFC/target-rate range from scratch after the user
+// corrects their basic profile info (age/gender/height/activity) or their
+// baseline weight/body-fat from the settings screen. Also writes the
+// corrected weight/body-fat into today's log entry so it's reflected
+// immediately in the dashboard and averages.
+function updateProfileBasics(vals){
+  const p = DATA.profile;
+  p.age = vals.age;
+  p.gender = vals.gender;
+  p.height = vals.height;
+  p.activity = vals.activity;
+  p.weight = vals.weight;
+  p.bodyFat = vals.bodyFat;
+
+  const idx = DATA.logs.findIndex(l=>l.date === todayStr());
+  if(idx >= 0){ DATA.logs[idx].weight = vals.weight; DATA.logs[idx].bodyFat = vals.bodyFat; }
+  else { DATA.logs.push({ date: todayStr(), weight: vals.weight, bodyFat: vals.bodyFat }); }
+
+  const s = DATA.state;
+  s.tdee = computeInitialTDEE(p);
+  const range = phaseRange(p.goal, vals.bodyFat, DATA.settings);
+  s.calories = Math.round(s.tdee * range.calMultiplier);
+  s.targetRateLo = range.lo;
+  s.targetRateHi = range.hi;
+  s.targetRate = Number(((range.lo + range.hi) / 2).toFixed(2));
+  s.phase = p.goal;
+  const pfc = computePFC(p.goal, s.calories, vals.weight);
+  s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
+  saveData(DATA);
+}
+
+function changeGoal(newGoal){
+  const bf = latestBF();
+  const range = phaseRange(newGoal, bf, DATA.settings);
+  const s = DATA.state;
+  DATA.profile.goal = newGoal;
+  s.calories = Math.round(s.tdee * range.calMultiplier);
+  s.targetRateLo = range.lo;
+  s.targetRateHi = range.hi;
+  s.targetRate = Number(((range.lo + range.hi) / 2).toFixed(2));
+  s.phase = newGoal;
+  const pfc = computePFC(newGoal, s.calories, latestWeight());
+  s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
+  saveData(DATA);
+}
+
 function checkPhaseEnd(bf){
   const g = DATA.profile.goal;
   if(g === 'bulk' && bf >= DATA.settings.bulkEndBf) return `体脂肪率が${DATA.settings.bulkEndBf}%に到達しました。増量終了のタイミングを検討してください。`;
@@ -889,14 +939,92 @@ function renderSettingsView(){
 
   c.appendChild(el('<div class="section-title">プロフィール</div>'));
   const p = DATA.profile;
-  c.appendChild(el(`<div class="settings-block">
-    <div class="sub" style="color:var(--text-muted);font-size:13px;line-height:1.9;">
-      年齢: ${p.age} ／ 性別: ${p.gender==='male'?'男性':'女性'}<br>
-      身長: ${p.height}cm<br>
-      運動量: ${ {low:'Low',medium:'Medium',high:'High'}[p.activity] }<br>
-      目的: ${ {bulk:'増量',cut:'減量',minicut:'ミニカット'}[p.goal] }
+  const editState = { gender: p.gender, activity: p.activity };
+  const profileForm = el(`<form class="settings-block" id="profileForm">
+    <div class="field"><label>年齢</label><input type="number" id="s_p_age" min="14" max="80" value="${p.age}" required></div>
+    <div class="field" style="margin-top:12px;"><label>性別</label>
+      <div class="choice-group two" id="s_p_genderGroup">
+        <button type="button" class="choice-btn ${p.gender==='male'?'active':''}" data-val="male">男性</button>
+        <button type="button" class="choice-btn ${p.gender==='female'?'active':''}" data-val="female">女性</button>
+      </div>
     </div>
-  </div>`));
+    <div class="row2" style="margin-top:12px;">
+      <div class="field"><label>身長 (cm)</label><input type="number" id="s_p_height" step="0.1" value="${p.height}" required></div>
+      <div class="field"><label>体重 (kg)</label><input type="number" id="s_p_weight" step="0.1" value="${latestWeight()}" required></div>
+    </div>
+    <div class="field" style="margin-top:12px;"><label>体脂肪率 (%)</label><input type="number" id="s_p_bf" step="0.1" value="${latestBF()}" required></div>
+    <div class="field" style="margin-top:12px;"><label>週間の運動量</label>
+      <div class="choice-group" id="s_p_activityGroup">
+        <button type="button" class="choice-btn ${p.activity==='low'?'active':''}" data-val="low">Low</button>
+        <button type="button" class="choice-btn ${p.activity==='medium'?'active':''}" data-val="medium">Medium</button>
+        <button type="button" class="choice-btn ${p.activity==='high'?'active':''}" data-val="high">High</button>
+      </div>
+    </div>
+    <div class="hint" style="margin-top:10px;">保存すると、推定TDEE・摂取カロリー・PFC・今週の目標範囲がこの内容で再計算されます。体重・体脂肪率は本日の記録として反映されます。</div>
+    <button type="submit" class="btn-secondary" style="margin-top:14px;">プロフィールを保存</button>
+  </form>`);
+  profileForm.querySelector('#s_p_genderGroup').addEventListener('click', e=>{
+    const btn = e.target.closest('.choice-btn'); if(!btn) return;
+    editState.gender = btn.dataset.val;
+    [...btn.parentElement.children].forEach(ch=>ch.classList.remove('active'));
+    btn.classList.add('active');
+  });
+  profileForm.querySelector('#s_p_activityGroup').addEventListener('click', e=>{
+    const btn = e.target.closest('.choice-btn'); if(!btn) return;
+    editState.activity = btn.dataset.val;
+    [...btn.parentElement.children].forEach(ch=>ch.classList.remove('active'));
+    btn.classList.add('active');
+  });
+  profileForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    const ageVal = profileForm.querySelector('#s_p_age').value;
+    const heightVal = profileForm.querySelector('#s_p_height').value;
+    const weightVal = profileForm.querySelector('#s_p_weight').value;
+    const bfVal = profileForm.querySelector('#s_p_bf').value;
+    if(ageVal === '' || heightVal === '' || weightVal === '' || bfVal === ''){
+      alert('すべての項目を入力してください。');
+      return;
+    }
+    const vals = {
+      age: Number(ageVal), height: Number(heightVal),
+      weight: Number(weightVal), bodyFat: Number(bfVal),
+      gender: editState.gender, activity: editState.activity
+    };
+    if(Object.values(vals).some(v => typeof v === 'number' && isNaN(v))){
+      alert('数値の入力に誤りがあります。半角数字で入力してください。');
+      return;
+    }
+    updateProfileBasics(vals);
+    render();
+  });
+  c.appendChild(profileForm);
+
+  c.appendChild(el('<div class="section-title">目的の変更</div>'));
+  const goalBlock = el(`<div class="settings-block">
+    <div class="choice-group" id="goalChangeGroup">
+      <button type="button" class="choice-btn ${p.goal==='bulk'?'active':''}" data-val="bulk">増量</button>
+      <button type="button" class="choice-btn ${p.goal==='cut'?'active':''}" data-val="cut">減量</button>
+      <button type="button" class="choice-btn ${p.goal==='minicut'?'active':''}" data-val="minicut">ミニカット</button>
+    </div>
+    <div class="hint" style="margin-top:10px;">目的を変更すると、現在の体脂肪率と推定TDEEをもとに摂取カロリー・PFC・今週の目標範囲が再計算されます。</div>
+    <button type="button" class="btn-secondary" id="saveGoal" style="margin-top:14px;">目的を変更する</button>
+  </div>`);
+  let selectedGoal = p.goal;
+  goalBlock.querySelector('#goalChangeGroup').addEventListener('click', e=>{
+    const btn = e.target.closest('.choice-btn'); if(!btn) return;
+    selectedGoal = btn.dataset.val;
+    [...btn.parentElement.children].forEach(ch=>ch.classList.remove('active'));
+    btn.classList.add('active');
+  });
+  goalBlock.querySelector('#saveGoal').addEventListener('click', ()=>{
+    if(selectedGoal === p.goal) return;
+    const label = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[selectedGoal];
+    if(confirm(`目的を「${label}」に変更しますか？摂取カロリーとPFCが再計算されます。`)){
+      changeGoal(selectedGoal);
+      render();
+    }
+  });
+  c.appendChild(goalBlock);
 
   c.appendChild(el('<div class="section-title">フェーズ設定</div>'));
   const block = el('<div class="settings-block"></div>');
