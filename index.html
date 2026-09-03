@@ -189,8 +189,8 @@ form{display:flex;flex-direction:column;gap:18px;}
 <script>
 /* =========================================================
    IRON LOG — bodyweight/bodyfat driven AI bulk/cut coach
-   All numeric logic lives in JS. The AI (Claude API) is only
-   ever asked to phrase coaching guidance from numbers we give it.
+   All numeric logic lives in JS. The AI API is only ever
+   asked to phrase coaching guidance from numbers we give it.
 ========================================================= */
 
 const STORE_KEY = 'ironlog_data_v1';
@@ -202,7 +202,13 @@ function loadData(){
   }catch(e){ return null; }
 }
 function saveData(d){
-  localStorage.setItem(STORE_KEY, JSON.stringify(d));
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify(d));
+    return true;
+  }catch(e){
+    alert('データの保存に失敗しました。ブラウザのサイトデータ/Cookie設定（プライベートブラウジングなど）をご確認ください。\n(' + e.message + ')');
+    return false;
+  }
 }
 
 let DATA = loadData();
@@ -236,7 +242,7 @@ function phaseRange(goal, bf, settings){
     return { calMultiplier: 0.80, lo: -0.75, hi: -0.50 };
   }
   // minicut: short, single aggressive range (no body-fat split)
-  return { calMultiplier: 0.80, lo: -1.25, hi: -0.75 };
+  return { calMultiplier: 0.80, lo: -1.00, hi: -0.75 };
 }
 
 function computePFC(goal, calories, weightKg){
@@ -435,7 +441,7 @@ function todayStr(){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-/* ---------- AI coaching text (Claude API) ---------- */
+/* ---------- AI coaching text ---------- */
 
 async function generateCoachingMessage(context){
   const goalLabel = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[DATA.profile.goal];
@@ -605,15 +611,27 @@ function renderOnboarding(){
 
   form.addEventListener('submit', (e)=>{
     e.preventDefault();
+    const ageVal = form.querySelector('#f_age').value;
+    const heightVal = form.querySelector('#f_height').value;
+    const weightVal = form.querySelector('#f_weight').value;
+    const bfVal = form.querySelector('#f_bf').value;
+    if(ageVal === '' || heightVal === '' || weightVal === '' || bfVal === ''){
+      alert('年齢・身長・体重・体脂肪率をすべて入力してください。');
+      return;
+    }
     const profile = {
-      age: Number(form.querySelector('#f_age').value),
+      age: Number(ageVal),
       gender: state.gender,
-      height: Number(form.querySelector('#f_height').value),
-      weight: Number(form.querySelector('#f_weight').value),
-      bodyFat: Number(form.querySelector('#f_bf').value),
+      height: Number(heightVal),
+      weight: Number(weightVal),
+      bodyFat: Number(bfVal),
       activity: state.activity,
       goal: state.goal
     };
+    if(Object.values(profile).some(v => typeof v === 'number' && isNaN(v))){
+      alert('数値の入力に誤りがあります。半角数字で入力してください。');
+      return;
+    }
     // Sensible built-in defaults for phase-end / switch thresholds — no manual
     // entry at registration. Adjustable later from the settings screen.
     const settings = { cutThreshold: 10, bulkEndBf: 16, competitionBf: 8, miniCutTarget: 8 };
@@ -637,7 +655,7 @@ function renderOnboarding(){
       adjustmentLog: [],
       coachingLog: []
     };
-    saveData(DATA);
+    if(!saveData(DATA)){ DATA = null; return; }
     currentView = 'dashboard';
     render();
   });
@@ -680,7 +698,7 @@ function renderDashboard(){
   c.appendChild(card);
 
   if(!DATA.apiKey){
-    c.appendChild(el(`<div class="hint" style="margin:-10px 0 18px;">AIコーチにClaudeの判断を使うには、設定画面でAnthropic APIキーを登録してください。未登録の間は範囲の中央値を使った簡易版で動作します。</div>`));
+    c.appendChild(el(`<div class="hint" style="margin:-10px 0 18px;">AIコーチの判断を使うには、設定画面でAPIキーを登録してください。未登録の間は範囲の中央値を使った簡易版で動作します。</div>`));
   }
 
   // stat grid
@@ -856,10 +874,10 @@ function drawChart(){
 function renderSettingsView(){
   const c = el('<div class="dash"></div>');
 
-  c.appendChild(el('<div class="section-title">AIコーチ (Anthropic APIキー)</div>'));
+  c.appendChild(el('<div class="section-title">AIコーチ (APIキー)</div>'));
   const apiBlock = el(`<div class="settings-block">
-    <div class="field"><label>APIキー</label><input type="password" id="s_apiKey" placeholder="sk-ant-..." value="${DATA.apiKey || ''}"></div>
-    <div class="small-note">このアプリはClaude.ai以外の場所(自分のPC・スマホでファイルを開く、または任意のWebサーバーにホストする)でもそのまま動作します。AIによる週次コーチングを使うには、console.anthropic.comで発行したAPIキーをここに入力してください。キーはこの端末のブラウザ内だけに保存され、api.anthropic.comへの通信にのみ使われます。未入力の場合は範囲の中央値を使った簡易ロジックで動作します。</div>
+    <div class="field"><label>APIキー</label><input type="password" id="s_apiKey" placeholder="APIキーを入力" value="${DATA.apiKey || ''}"></div>
+    <div class="small-note">このアプリはブラウザ単体で動作します。AIによる週次コーチングを使うには、APIキーをここに入力してください。キーはこの端末のブラウザ内だけに保存され、AIサービスとの通信にのみ使われます。未入力の場合は範囲の中央値を使った簡易ロジックで動作します。</div>
     <button type="button" class="btn-secondary" id="saveApiKey" style="margin-top:12px;">キーを保存</button>
   </div>`);
   apiBlock.querySelector('#saveApiKey').addEventListener('click', ()=>{
