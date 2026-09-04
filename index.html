@@ -299,6 +299,60 @@ function latestWeight(){
   return logs.length ? logs[logs.length-1].weight : DATA.profile.weight;
 }
 
+// Body-fat-%-target simulator. Requires >=14 days of logs (2 full 7-day
+// windows). Builds up to 8 non-overlapping 7-day windows of body-fat/weight
+// averages (oldest -> newest), derives a simple weekly rate of body-fat
+// change from the first vs last window, and — if that rate points toward
+// the goal's target bf% — projects a week-by-week table until reaching it.
+const SIM_TARGET_BF = { bulk: 16, cut: 6, minicut: 8 };
+
+function computeBfSimulation(){
+  const logs = sortedLogs();
+  if(logs.length < 14) return null;
+
+  const windows = [];
+  for(let off = 0; windows.length < 8; off += 7){
+    const slice = lastNDays(7, off);
+    if(slice.length < 7) break;
+    windows.push({
+      avgBf: avg(slice.map(l=>l.bodyFat)),
+      avgWeight: avg(slice.map(l=>l.weight))
+    });
+  }
+  windows.reverse(); // oldest -> newest
+  if(windows.length < 2) return null;
+
+  const first = windows[0], last = windows[windows.length-1];
+  const weeksSpan = windows.length - 1;
+  const bfRatePerWeek = (last.avgBf - first.avgBf) / weeksSpan;
+  const currentBf = last.avgBf;
+
+  const goal = DATA.profile.goal;
+  const targetBf = SIM_TARGET_BF[goal];
+  const needsRise = goal === 'bulk';
+  const validDirection = needsRise
+    ? (bfRatePerWeek > 0.001 && currentBf < targetBf)
+    : (bfRatePerWeek < -0.001 && currentBf > targetBf);
+
+  if(!validDirection){
+    return { possible: false, goal, currentBf, targetBf, bfRatePerWeek, weeksSpan };
+  }
+
+  const totalWeeks = Math.ceil(Math.abs((targetBf - currentBf) / bfRatePerWeek));
+  const stepWeeks = Math.max(1, Math.round(totalWeeks / 8));
+  const rows = [];
+  const today = new Date();
+  for(let w = stepWeeks; w < totalWeeks; w += stepWeeks){
+    const projBf = currentBf + bfRatePerWeek * w;
+    const d = new Date(today); d.setDate(d.getDate() + w * 7);
+    rows.push({ week: w, date: d.toISOString().slice(0,10), bf: Number(projBf.toFixed(1)) });
+  }
+  const finalDate = new Date(today); finalDate.setDate(finalDate.getDate() + totalWeeks * 7);
+  rows.push({ week: totalWeeks, date: finalDate.toISOString().slice(0,10), bf: targetBf });
+
+  return { possible: true, goal, currentBf, targetBf, bfRatePerWeek, totalWeeks, rows, weeksSpan };
+}
+
 const STEP_MIN = 100, STEP_MAX = 200, STEP_DEFAULT = 150;
 
 // AIコーチ機能用のAPIキー。ユーザー入力欄は廃止し、ここに固定で埋め込みます。
@@ -511,13 +565,15 @@ function changeGoal(newGoal){
 
 // Toggle AI mode. Switching to AI: recompute calories/PFC/target-range from
 // the current TDEE, goal and body-fat so the AI takes over from an
-// up-to-date baseline. Switching to manual: nothing is recalculated — the
-// last known calories/PFC (whichever mode set them) simply become the
-// starting point the user edits from in Settings.
+// up-to-date baseline. Switching to manual: restore the user's own
+// last-saved manual calories/PFC (DATA.manualMacros) if any exist, so that
+// OFF(1) -> ON -> OFF(2) shows OFF(1)'s values again rather than whatever
+// the AI last set. If no manual entry was ever saved, the current
+// values(AI's) simply become the starting point to edit from.
 function toggleAiMode(newMode){
   DATA.aiMode = newMode;
+  const s = DATA.state;
   if(newMode){
-    const s = DATA.state;
     const bf = latestBF();
     const range = phaseRange(DATA.profile.goal, bf, DATA.settings);
     s.targetRateLo = range.lo;
@@ -526,6 +582,11 @@ function toggleAiMode(newMode){
     s.calories = Math.round(s.tdee * range.calMultiplier);
     const pfc = computePFC(DATA.profile.goal, s.calories, latestWeight());
     s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
+  } else if(DATA.manualMacros){
+    s.calories = DATA.manualMacros.calories;
+    s.protein = DATA.manualMacros.protein;
+    s.fat = DATA.manualMacros.fat;
+    s.carb = DATA.manualMacros.carb;
   }
   saveData(DATA);
 }
@@ -930,6 +991,30 @@ function renderChartsView(){
   c.appendChild(box);
 
   setTimeout(()=>drawChart(), 0);
+
+  // body-fat-%-target simulator
+  const sim = computeBfSimulation();
+  c.appendChild(el('<div class="section-title">体脂肪率シミュレーター</div>'));
+  if(!sim){
+    c.appendChild(el(`<div class="settings-block hint">体重・体脂肪率を14日分(2週間)以上記録すると、直近の推移から目標体脂肪率までの到達予測が表示されます。</div>`));
+  } else {
+    const goalLabel = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[sim.goal];
+    if(!sim.possible){
+      c.appendChild(el(`<div class="settings-block hint">直近${sim.weeksSpan}週間の推移(週あたり${sim.bfRatePerWeek>0?'+':''}${sim.bfRatePerWeek.toFixed(2)}%)では、${goalLabel}の目標体脂肪率${sim.targetBf}%への到達を見込めていません。現在${sim.currentBf.toFixed(1)}%です。</div>`));
+    } else {
+      const rowsHtml = sim.rows.map(r=>`<tr><td>${r.week}週後</td><td>${r.date}</td><td>${r.bf}%</td></tr>`).join('');
+      c.appendChild(el(`<div class="settings-block">
+        <div class="hint" style="margin-bottom:10px;">直近${sim.weeksSpan}週間の推移(週あたり${sim.bfRatePerWeek>0?'+':''}${sim.bfRatePerWeek.toFixed(2)}%)が続いた場合の、${goalLabel}目標体脂肪率${sim.targetBf}%までの予測です。現在${sim.currentBf.toFixed(1)}%。</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead><tr style="color:var(--text-muted);text-align:left;border-bottom:1px solid var(--border);">
+            <th style="padding:6px 4px;">経過</th><th style="padding:6px 4px;">予測日</th><th style="padding:6px 4px;">予測体脂肪率</th>
+          </tr></thead>
+          <tbody style="color:var(--text);">${rowsHtml}</tbody>
+        </table>
+      </div>`));
+    }
+  }
+
   return c;
 }
 
@@ -939,7 +1024,7 @@ function drawChart(){
   if(chartInstance) chartInstance.destroy();
 
   const logs = sortedLogs();
-  const labels = logs.map(l=>l.date.slice(5));
+  let labels = logs.map(l=>l.date.slice(5));
 
   const gridColor = 'rgba(255,255,255,0.06)';
   const textColor = '#8B8E96';
@@ -963,23 +1048,56 @@ function drawChart(){
       { label:'体重', data: logs.map(l=>l.weight), borderColor:'#E3A93B', backgroundColor:'transparent', tension:0.25, pointRadius:2 },
       { label:'7日平均', data: rolling, borderColor:'#5C9B6E', backgroundColor:'transparent', tension:0.25, pointRadius:0, borderWidth:2 }
     ];
+    chartInstance = new Chart(canvas, { type:'line', data:{ labels, datasets }, options: baseOpts });
   } else if(chartTab === 'bodyfat'){
     datasets = [
       { label:'体脂肪率', data: logs.map(l=>l.bodyFat), borderColor:'#C1584B', backgroundColor:'transparent', tension:0.25, pointRadius:2 }
     ];
+    chartInstance = new Chart(canvas, { type:'line', data:{ labels, datasets }, options: baseOpts });
   } else if(chartTab === 'leanmass'){
     datasets = [
       { label:'除脂肪体重', data: logs.map(l=> Number((l.weight * (1 - l.bodyFat/100)).toFixed(1))), borderColor:'#5C9B6E', backgroundColor:'transparent', tension:0.25, pointRadius:2 }
     ];
+    chartInstance = new Chart(canvas, { type:'line', data:{ labels, datasets }, options: baseOpts });
   } else if(chartTab === 'calorie'){
-    const adj = DATA.adjustmentLog || [];
-    const calByDate = {}; adj.forEach(a=>calByDate[a.date]=a.calories);
-    datasets = [
-      { label:'摂取カロリー', data: logs.map(l=> calByDate[l.date] || null), borderColor:'#E3A93B', backgroundColor:'transparent', tension:0.1, pointRadius:2, spanGaps:true }
-    ];
+    // The prescribed calorie value only changes on weekly-adjustment dates,
+    // so plotting it against every daily log date makes the line mostly
+    // gaps. Instead, plot only the adjustment-log dates directly, as a
+    // stepped/filled line — this reads much more clearly as "what my
+    // calories were set to, and when it changed".
+    const adj = (DATA.adjustmentLog || []).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    const calLabels = adj.map(a=>a.date.slice(5));
+    const calValues = adj.map(a=>a.calories);
+    const calOpts = {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor } },
+        y:{ ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor }, suggestedMin: calValues.length ? Math.min(...calValues) - 150 : undefined, suggestedMax: calValues.length ? Math.max(...calValues) + 150 : undefined }
+      }
+    };
+    chartInstance = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: calLabels,
+        datasets: [{
+          label: '摂取カロリー',
+          data: calValues,
+          borderColor: '#E3A93B',
+          backgroundColor: 'rgba(227,169,59,0.15)',
+          fill: true,
+          stepped: 'before',
+          tension: 0,
+          pointRadius: 4,
+          pointBackgroundColor: '#E3A93B',
+          pointBorderColor: '#0E0F12',
+          pointBorderWidth: 1,
+          borderWidth: 2.5
+        }]
+      },
+      options: calOpts
+    });
   }
-
-  chartInstance = new Chart(canvas, { type:'line', data:{ labels, datasets }, options: baseOpts });
 }
 
 /* ---- settings view ---- */
@@ -1122,6 +1240,7 @@ function renderSettingsView(){
       s.protein = Math.round(pVal);
       s.fat = Math.round(fVal);
       s.carb = Math.round(cVal);
+      DATA.manualMacros = { calories: s.calories, protein: s.protein, fat: s.fat, carb: s.carb };
       saveData(DATA);
       render();
     });
