@@ -110,6 +110,11 @@ a{
   border-color:var(--cut);
 }
 
+.phase-badge.maintenance{
+  color:var(--amber);
+  border-color:var(--amber);
+}
+
 .wrap{
   max-width:640px;
   margin:0 auto;
@@ -193,8 +198,12 @@ form{
 
 .choice-group{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(4,1fr);
   gap:8px;
+}
+
+.choice-group.three{
+  grid-template-columns:repeat(3,1fr);
 }
 
 .choice-group.two{
@@ -542,6 +551,14 @@ form{
   .pfc-item .value{
     font-size:18px;
   }
+
+  .choice-group{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .choice-group.three{
+    grid-template-columns:repeat(3,1fr);
+  }
 }
 </style>
 </head>
@@ -574,7 +591,7 @@ form{
 
 /* =========================================================
    IRON LOG
-   bodyweight/bodyfat driven AI bulk/cut coach
+   bodyweight/bodyfat driven AI bulk/cut/maintenance coach
 ========================================================= */
 
 const STORE_KEY = 'ironlog_data_v1';
@@ -825,6 +842,23 @@ function computeInitialTDEE(p){
 
 }
 
+/*
+  フェーズごとの計算設定
+
+  bulk:
+    TDEE × 1.10 / 1.05
+
+  maintenance:
+    TDEE × 1.00
+    目標体重変化率 0%/週
+
+  cut:
+    TDEE × 0.80
+
+  minicut:
+    TDEE × 0.80
+*/
+
 function phaseRange(
   goal,
   bf,
@@ -850,6 +884,21 @@ function phaseRange(
       calMultiplier:1.05,
       lo:0.25,
       hi:0.35
+
+    };
+
+  }
+
+  /*
+    維持モード
+  */
+  if(goal === 'maintenance'){
+
+    return {
+
+      calMultiplier:1.00,
+      lo:0,
+      hi:0
 
     };
 
@@ -892,6 +941,18 @@ function phaseRange(
 
 }
 
+/*
+  PFC
+
+  増量・維持:
+    P 1.9g/kg
+    F 0.8g/kg
+
+  減量・ミニカット:
+    P 2.6g/kg
+    F 0.6g/kg
+*/
+
 function computePFC(
   goal,
   calories,
@@ -901,7 +962,10 @@ function computePFC(
   let pPerKg;
   let fPerKg;
 
-  if(goal === 'bulk'){
+  if(
+    goal === 'bulk' ||
+    goal === 'maintenance'
+  ){
 
     pPerKg = 1.9;
     fPerKg = 0.8;
@@ -1239,6 +1303,44 @@ function estimateTDEEFromLogs(){
 
 }
 
+/*
+  維持モードでは、
+  TDEEが更新されたら摂取カロリーもTDEEへ同期する。
+*/
+function syncMaintenanceCalories(){
+
+  if(
+    DATA.profile.goal !==
+    'maintenance'
+  ){
+
+    return;
+
+  }
+
+  DATA.state.calories =
+    Math.round(
+      DATA.state.tdee
+    );
+
+  const pfc =
+    computePFC(
+      'maintenance',
+      DATA.state.calories,
+      latestWeight()
+    );
+
+  DATA.state.protein =
+    pfc.protein;
+
+  DATA.state.fat =
+    pfc.fat;
+
+  DATA.state.carb =
+    pfc.carb;
+
+}
+
 function refreshDerivedData(){
 
   const avgs =
@@ -1260,6 +1362,11 @@ function refreshDerivedData(){
 
     DATA.state.tdee =
       estimateTDEEFromLogs();
+
+    /*
+      維持ならTDEEを総カロリーにする
+    */
+    syncMaintenanceCalories();
 
   }
 
@@ -1321,6 +1428,26 @@ async function decideTargetRate(
       range.lo +
       range.hi
     ) / 2;
+
+  /*
+    維持モードは常に0%/週
+    AIに不要な判断をさせない。
+  */
+  if(
+    DATA.profile.goal ===
+    'maintenance'
+  ){
+
+    return {
+
+      targetRate:0,
+
+      rationale:
+        '維持モードのため体重変化率0%/週を目標にします。'
+
+    };
+
+  }
 
   try{
 
@@ -1509,6 +1636,7 @@ async function runWeeklyEngine(){
     const goalLabel =
       {
         bulk:'増量',
+        maintenance:'維持',
         cut:'減量',
         minicut:'ミニカット'
       }[
@@ -1532,7 +1660,22 @@ async function runWeeklyEngine(){
 
     let forcedReset=false;
 
-    if(rangeChanged){
+    /*
+      維持モードは常にTDEEを総カロリーとする。
+    */
+    if(
+      DATA.profile.goal ===
+      'maintenance'
+    ){
+
+      s.calories =
+        Math.round(
+          s.tdee
+        );
+
+      forcedReset=true;
+
+    }else if(rangeChanged){
 
       s.calories =
         Math.round(
@@ -1560,7 +1703,15 @@ async function runWeeklyEngine(){
     let adjustment=0;
     let action='maintain';
 
-    if(!forcedReset){
+    /*
+      維持モードでは体重変化に関係なく
+      カロリーを増減させない。
+    */
+    if(
+      !forcedReset &&
+      DATA.profile.goal !==
+      'maintenance'
+    ){
 
       if(diff > 0.1){
 
@@ -1584,6 +1735,23 @@ async function runWeeklyEngine(){
           s.calories +
           adjustment
         );
+
+    }
+
+    /*
+      維持では必ずTDEEに同期
+    */
+    if(
+      DATA.profile.goal ===
+      'maintenance'
+    ){
+
+      s.calories =
+        Math.round(
+          s.tdee
+        );
+
+      action='maintain';
 
     }
 
@@ -1657,8 +1825,46 @@ async function runWeeklyEngine(){
 
   }
 
+  /*
+    TDEEを最新値へ更新
+  */
   s.tdee =
     estimateTDEEFromLogs();
+
+  /*
+    維持モードでは、更新後TDEEも
+    そのまま総摂取カロリーへ反映
+  */
+  if(
+    DATA.profile.goal ===
+    'maintenance'
+  ){
+
+    s.calories =
+      Math.round(
+        s.tdee
+      );
+
+    const pfc =
+      computePFC(
+        'maintenance',
+        s.calories,
+        latestWeight()
+      );
+
+    s.protein =
+      pfc.protein;
+
+    s.fat =
+      pfc.fat;
+
+    s.carb =
+      pfc.carb;
+
+    entry.calories =
+      s.calories;
+
+  }
 
   entry.tdee =
     s.tdee;
@@ -1712,11 +1918,28 @@ function changeGoal(newGoal){
         DATA.settings
       );
 
-    s.calories =
-      Math.round(
-        s.tdee *
-        range.calMultiplier
-      );
+    /*
+      維持の場合はTDEEそのもの
+    */
+    if(
+      newGoal ===
+      'maintenance'
+    ){
+
+      s.calories =
+        Math.round(
+          s.tdee
+        );
+
+    }else{
+
+      s.calories =
+        Math.round(
+          s.tdee *
+          range.calMultiplier
+        );
+
+    }
 
     s.targetRateLo =
       range.lo;
@@ -1792,11 +2015,28 @@ function toggleAiMode(newMode){
         ).toFixed(2)
       );
 
-    s.calories =
-      Math.round(
-        s.tdee *
-        range.calMultiplier
-      );
+    /*
+      維持ならTDEEそのもの
+    */
+    if(
+      DATA.profile.goal ===
+      'maintenance'
+    ){
+
+      s.calories =
+        Math.round(
+          s.tdee
+        );
+
+    }else{
+
+      s.calories =
+        Math.round(
+          s.tdee *
+          range.calMultiplier
+        );
+
+    }
 
     const pfc =
       computePFC(
@@ -1906,6 +2146,7 @@ async function generateCoachingMessage(
   const goalLabel =
     {
       bulk:'増量',
+      maintenance:'維持',
       cut:'減量',
       minicut:'ミニカット'
     }[
@@ -1913,7 +2154,7 @@ async function generateCoachingMessage(
     ];
 
   const sys =
-    `あなたはボディビルダー専属の栄養コーチです。渡された数値データだけをもとに、今週ユーザーが何をすべきかを日本語で2〜4文、具体的かつ簡潔に指示してください。数値の再計算はせず、渡された数値をそのまま根拠として使ってください。丁寧だが端的なコーチの口調で。マークダウンや箇条書きは使わないでください。`;
+    `あなたはボディビルダー専属の栄養コーチです。渡された数値データだけをもとに、今週ユーザーが何をすべきかを日本語で2〜4文、具体的かつ簡潔に指示してください。数値の再計算はせず、渡された数値をそのまま根拠として使ってください。丁寧だが端的なコーチの口調で。マークダウンや箇条書きは使わないでください。維持フェーズでは、TDEEと摂取カロリーが同じであることを前提にしてください。`;
 
   const u =
     `フェーズ: ${goalLabel}
@@ -1921,8 +2162,8 @@ async function generateCoachingMessage(
 今週の7日平均体重: ${context.avgs.currentAvg.toFixed(2)}kg
 前週の7日平均体重: ${context.avgs.prevAvg ? context.avgs.prevAvg.toFixed(2) : 'ー'}kg
 週間体重変化率: ${context.avgs.weeklyRate.toFixed(2)}%/week
-今週の目標範囲: ${context.entry.targetRateLo}%〜${context.entry.targetRateHi}%/week
-AIが範囲内で選んだ今週の目標値: ${context.entry.targetRate}%/week
+今週の目標範囲: ${context.entry.targetRateLo !== undefined ? context.entry.targetRateLo : 'ー'}%〜${context.entry.targetRateHi !== undefined ? context.entry.targetRateHi : 'ー'}%/week
+AIが範囲内で選んだ今週の目標値: ${context.entry.targetRate !== undefined ? context.entry.targetRate : 'ー'}%/week
 理由: ${context.entry.rationale || 'ー'}
 今週とった処置: ${context.entry.action === 'maintain' ? 'カロリー維持' : context.entry.action === 'decrease' ? 'カロリーを減らした' : 'カロリーを増やした'}
 現在の摂取カロリー: ${context.entry.calories}kcal
@@ -1986,7 +2227,18 @@ ${context.phaseEndNote ? '注意: ' + context.phaseEndNote : ''}`;
 
   let msg='';
 
+  /*
+    維持モード専用フォールバック
+  */
   if(
+    DATA.profile.goal ===
+    'maintenance'
+  ){
+
+    msg =
+      `週間体重変化率は${context.avgs.weeklyRate.toFixed(2)}%/weekでした。維持モードでは体重変化率0%/weekを目標とし、推定TDEE(${context.entry.tdee}kcal)をそのまま摂取カロリーとして設定しています。`;
+
+  }else if(
     context.entry.action ===
     'maintain'
   ){
@@ -2150,11 +2402,38 @@ function renderTopbar(){
   const goalLabel =
     {
       bulk:'増量',
+      maintenance:'維持',
       cut:'減量',
       minicut:'ミニカット'
     }[
       DATA.profile.goal
     ];
+
+  let badgeClass =
+    '';
+
+  if(
+    DATA.profile.goal ===
+    'bulk'
+  ){
+
+    badgeClass =
+      'bulk';
+
+  }else if(
+    DATA.profile.goal ===
+    'maintenance'
+  ){
+
+    badgeClass =
+      'maintenance';
+
+  }else{
+
+    badgeClass =
+      'cut';
+
+  }
 
   return el(
     `<div class="topbar">
@@ -2169,11 +2448,7 @@ function renderTopbar(){
 
       </div>
 
-      <div class="phase-badge ${
-        DATA.profile.goal === 'bulk'
-          ? 'bulk'
-          : 'cut'
-      }">
+      <div class="phase-badge ${badgeClass}">
 
         ${goalLabel}フェーズ
 
@@ -2352,7 +2627,7 @@ function renderOnboarding(){
         </label>
 
         <div
-          class="choice-group"
+          class="choice-group three"
           id="activityGroup"
         >
 
@@ -2410,6 +2685,14 @@ function renderOnboarding(){
           <button
             type="button"
             class="choice-btn"
+            data-val="maintenance"
+          >
+            維持
+          </button>
+
+          <button
+            type="button"
+            class="choice-btn"
             data-val="cut"
           >
             減量
@@ -2427,8 +2710,10 @@ function renderOnboarding(){
 
         <div class="hint">
 
-          目標の体重変化率は固定値ではなく範囲で自動設定され、
-          体脂肪率の推移に応じてAIが範囲内で毎週の目標値を選びます。
+          増量・減量・ミニカットでは、
+          体重変化率の範囲内でAIが毎週の目標値を選択します。
+          維持では体重変化率0%/週を目標とし、
+          推定TDEEをそのまま総摂取カロリーとして使用します。
 
         </div>
 
@@ -2670,11 +2955,17 @@ function renderOnboarding(){
           settings
         );
 
+      /*
+        維持ならTDEEそのもの
+      */
       const calories =
-        Math.round(
-          tdee *
-          range.calMultiplier
-        );
+        profile.goal ===
+        'maintenance'
+          ? tdee
+          : Math.round(
+              tdee *
+              range.calMultiplier
+            );
 
       const pfc =
         computePFC(
@@ -3167,6 +3458,16 @@ function renderDashboard(){
             </small>
 
           </div>
+
+          ${
+            DATA.profile.goal === 'maintenance'
+              ? `
+                <div class="sub">
+                  TDEEと同じ
+                </div>
+              `
+              : ''
+          }
 
         </div>
 
@@ -4418,6 +4719,18 @@ function renderSettingsView(){
           <button
             type="button"
             class="choice-btn ${
+              p.goal === 'maintenance'
+                ? 'active'
+                : ''
+            }"
+            data-val="maintenance"
+          >
+            維持
+          </button>
+
+          <button
+            type="button"
+            class="choice-btn ${
               p.goal === 'cut'
                 ? 'active'
                 : ''
@@ -4450,6 +4763,7 @@ function renderSettingsView(){
           現在の体脂肪率と推定TDEEをもとに
           摂取カロリー・PFC・今週の目標範囲が
           再計算されます。
+          維持では摂取カロリーを推定TDEEと同じ値に設定します。
 
         </div>
 
@@ -4522,6 +4836,7 @@ function renderSettingsView(){
       const label =
         {
           bulk:'増量',
+          maintenance:'維持',
           cut:'減量',
           minicut:'ミニカット'
         }[
@@ -4604,6 +4919,7 @@ function renderSettingsView(){
           ONの場合、AIが週次で摂取カロリーとPFCを自動設定します。
           OFFの場合、摂取カロリーとPFCはこの画面で手入力します。
           どちらの場合も、推定TDEEは体重の推移をもとに自動更新され続けます。
+          維持モードのAI ONでは、摂取カロリーはTDEEと同じ値に固定されます。
 
         </div>
 
