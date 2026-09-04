@@ -198,7 +198,11 @@ const STORE_KEY = 'ironlog_data_v1';
 function loadData(){
   try{
     const raw = localStorage.getItem(STORE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    // backward compat: data saved before AI mode existed defaults to ON
+    if(d && d.aiMode === undefined) d.aiMode = true;
+    return d;
   }catch(e){ return null; }
 }
 function saveData(d){
@@ -297,10 +301,17 @@ function latestWeight(){
 
 const STEP_MIN = 100, STEP_MAX = 200, STEP_DEFAULT = 150;
 
+// AIコーチ機能用のAPIキー。ユーザー入力欄は廃止し、ここに固定で埋め込みます。
+// 注意: このファイルは静的にホストされているため、ページのソースを見れば
+// 誰でもこのキーを読み取れます。悪用・不正利用・想定外の課金につながる
+// リスクがあるため、公開ホスティングで使う場合は必ず利用上限(スペンドリ
+// ミット)を設定し、キーが漏れても被害を抑えられるようにしてください。
+const EMBEDDED_API_KEY = "ここに自分のAnthropic APIキーを貼り付けてください";
+
 function apiHeaders(){
   return {
     "Content-Type": "application/json",
-    "x-api-key": DATA.apiKey || "",
+    "x-api-key": EMBEDDED_API_KEY,
     "anthropic-version": "2023-06-01",
     "anthropic-dangerous-direct-browser-access": "true"
   };
@@ -316,9 +327,6 @@ function extractJson(text){
 // judgment-based target point, clamped to the range as a safety net.
 async function decideTargetRate(range, ctx){
   const mid = (range.lo + range.hi) / 2;
-  if(!DATA.apiKey){
-    return { targetRate: Number(mid.toFixed(2)), rationale: 'APIキー未設定のため範囲の中央値を暫定使用しています。' };
-  }
   try{
     const sys = `あなたはボディビルダーの栄養コーチです。与えられた範囲[${range.lo}%〜${range.hi}%]/週の中から、直近の体重推移をもとに今週目指すべき体重変化率を1つだけ選んでください。範囲の外の値は絶対に選ばないでください。JSON以外の文字は一切出力せず、次の形式だけを返してください: {"targetRate": 数値, "reason": "一言(20字程度)"}`;
     const u = `フェーズ: ${ctx.goalLabel}
@@ -343,60 +351,91 @@ async function decideTargetRate(range, ctx){
   }
 }
 
-// The weekly engine: phase-range selection -> AI picks target within range ->
-// compare to actual -> adjust calories -> update TDEE. Only the target-rate
-// point is AI-judged; every calculation is done here in JS.
+// The weekly engine. In AI mode: phase-range selection -> AI picks target
+// within range -> compare to actual -> adjust calories -> recompute PFC.
+// In manual mode: calories/PFC are whatever the user set in Settings; only
+// TDEE re-estimation runs. TDEE re-estimation itself is common to both
+// modes and always runs last, using s.calories (AI-set or manually-set) as
+// the assumed intake for the comparison week.
 async function runWeeklyEngine(){
   const s = DATA.state;
   const avgs = computeAverages();
   if(!avgs || avgs.weeklyRate === null) return null;
 
   const bf = latestBF();
-  const range = phaseRange(DATA.profile.goal, bf, DATA.settings);
-  const rangeChanged = (s.targetRateLo !== range.lo || s.targetRateHi !== range.hi);
+  let entry;
 
-  const logs = sortedLogs();
-  const recentAvgs = [];
-  for(let off = 21; off >= 0; off -= 7){
-    const slice = lastNDays(7, off);
-    if(slice.length === 7) recentAvgs.push(avg(slice.map(l=>l.weight)));
-  }
-  const goalLabel = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[DATA.profile.goal];
+  if(DATA.aiMode){
+    const range = phaseRange(DATA.profile.goal, bf, DATA.settings);
+    const rangeChanged = (s.targetRateLo !== range.lo || s.targetRateHi !== range.hi);
 
-  const decision = await decideTargetRate(range, {
-    goalLabel, bf, recentAvgs, prevTargetRate: s.targetRate
-  });
-
-  let forcedReset = false;
-  if(rangeChanged){
-    s.calories = Math.round(s.tdee * range.calMultiplier);
-    forcedReset = true;
-  }
-  s.targetRateLo = range.lo;
-  s.targetRateHi = range.hi;
-  s.targetRate = decision.targetRate;
-
-  const diff = avgs.weeklyRate - s.targetRate;
-  let adjustment = 0;
-  let action = 'maintain';
-  if(!forcedReset){
-    if(diff > 0.1){
-      adjustment = -STEP_DEFAULT;
-      action = 'decrease';
-    } else if(diff < -0.1){
-      adjustment = STEP_DEFAULT;
-      action = 'increase';
+    const logs = sortedLogs();
+    const recentAvgs = [];
+    for(let off = 21; off >= 0; off -= 7){
+      const slice = lastNDays(7, off);
+      if(slice.length === 7) recentAvgs.push(avg(slice.map(l=>l.weight)));
     }
-    s.calories = Math.max(1200, s.calories + adjustment);
-  }
+    const goalLabel = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[DATA.profile.goal];
 
-  // PFC recompute
-  const pfc = computePFC(DATA.profile.goal, s.calories, latestWeight());
-  s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
+    const decision = await decideTargetRate(range, {
+      goalLabel, bf, recentAvgs, prevTargetRate: s.targetRate
+    });
+
+    let forcedReset = false;
+    if(rangeChanged){
+      s.calories = Math.round(s.tdee * range.calMultiplier);
+      forcedReset = true;
+    }
+    s.targetRateLo = range.lo;
+    s.targetRateHi = range.hi;
+    s.targetRate = decision.targetRate;
+
+    const diff = avgs.weeklyRate - s.targetRate;
+    let adjustment = 0;
+    let action = 'maintain';
+    if(!forcedReset){
+      if(diff > 0.1){
+        adjustment = -STEP_DEFAULT;
+        action = 'decrease';
+      } else if(diff < -0.1){
+        adjustment = STEP_DEFAULT;
+        action = 'increase';
+      }
+      s.calories = Math.max(1200, s.calories + adjustment);
+    }
+
+    // PFC recompute
+    const pfc = computePFC(DATA.profile.goal, s.calories, latestWeight());
+    s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
+
+    entry = {
+      date: todayStr(),
+      mode: 'ai',
+      weeklyRate: avgs.weeklyRate,
+      targetRate: s.targetRate,
+      targetRateLo: range.lo,
+      targetRateHi: range.hi,
+      rationale: decision.rationale,
+      bodyFat: bf,
+      calories: s.calories,
+      action, forcedReset
+    };
+  } else {
+    // Manual mode: calories/PFC are left exactly as the user set them in
+    // Settings. Nothing to decide here — only TDEE re-estimation below.
+    entry = {
+      date: todayStr(),
+      mode: 'manual',
+      weeklyRate: avgs.weeklyRate,
+      bodyFat: bf,
+      calories: s.calories
+    };
+  }
 
   // TDEE re-estimation from realized data: since we no longer collect a logged
-  // intake figure, assume adherence to the calories the app itself prescribed
-  // over the comparison week and compare that to the actual weight trend.
+  // intake figure, assume adherence to the calories currently set (whether
+  // AI-set or manually-set) over the comparison week and compare that to the
+  // actual weight trend. Runs regardless of AI mode.
   if(avgs.prevAvg !== null){
     const assumedIntake = s.calories;
     const expectedWeeklyKg = (assumedIntake - s.tdee) * 7 / 7700;
@@ -406,22 +445,11 @@ async function runWeeklyEngine(){
     tdeeAdj = Math.max(-100, Math.min(100, tdeeAdj));
     s.tdee = Math.round(s.tdee + tdeeAdj);
   }
+  entry.tdee = s.tdee;
 
   s.lastAdjustmentDate = todayStr();
   s.phase = DATA.profile.goal;
 
-  const entry = {
-    date: todayStr(),
-    weeklyRate: avgs.weeklyRate,
-    targetRate: s.targetRate,
-    targetRateLo: range.lo,
-    targetRateHi: range.hi,
-    rationale: decision.rationale,
-    bodyFat: bf,
-    calories: s.calories,
-    tdee: s.tdee,
-    action, forcedReset
-  };
   DATA.adjustmentLog = DATA.adjustmentLog || [];
   DATA.adjustmentLog.push(entry);
 
@@ -429,9 +457,9 @@ async function runWeeklyEngine(){
 }
 
 // Recompute calories/PFC/target-rate range when the user manually switches
-// goal from settings. TDEE itself is left untouched (it's a property of the
-// body/activity level, not the goal); only the goal-dependent quantities
-// (calorie multiplier, PFC ratios, target-rate range) are recalculated.
+// goal from settings, but only in AI mode — in manual mode the user's own
+// calorie/PFC entries are left untouched. TDEE itself is never touched here
+// (it's a property of the body/activity level, not the goal).
 // Recompute TDEE/calories/PFC/target-rate range from scratch after the user
 // corrects their basic profile info (age/gender/height/activity) or their
 // baseline weight/body-fat from the settings screen. Also writes the
@@ -464,17 +492,41 @@ function updateProfileBasics(vals){
 }
 
 function changeGoal(newGoal){
-  const bf = latestBF();
-  const range = phaseRange(newGoal, bf, DATA.settings);
   const s = DATA.state;
   DATA.profile.goal = newGoal;
-  s.calories = Math.round(s.tdee * range.calMultiplier);
-  s.targetRateLo = range.lo;
-  s.targetRateHi = range.hi;
-  s.targetRate = Number(((range.lo + range.hi) / 2).toFixed(2));
   s.phase = newGoal;
-  const pfc = computePFC(newGoal, s.calories, latestWeight());
-  s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
+  if(DATA.aiMode){
+    const bf = latestBF();
+    const range = phaseRange(newGoal, bf, DATA.settings);
+    s.calories = Math.round(s.tdee * range.calMultiplier);
+    s.targetRateLo = range.lo;
+    s.targetRateHi = range.hi;
+    s.targetRate = Number(((range.lo + range.hi) / 2).toFixed(2));
+    const pfc = computePFC(newGoal, s.calories, latestWeight());
+    s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
+  }
+  // manual mode: leave the user's own calories/PFC entries untouched
+  saveData(DATA);
+}
+
+// Toggle AI mode. Switching to AI: recompute calories/PFC/target-range from
+// the current TDEE, goal and body-fat so the AI takes over from an
+// up-to-date baseline. Switching to manual: nothing is recalculated — the
+// last known calories/PFC (whichever mode set them) simply become the
+// starting point the user edits from in Settings.
+function toggleAiMode(newMode){
+  DATA.aiMode = newMode;
+  if(newMode){
+    const s = DATA.state;
+    const bf = latestBF();
+    const range = phaseRange(DATA.profile.goal, bf, DATA.settings);
+    s.targetRateLo = range.lo;
+    s.targetRateHi = range.hi;
+    s.targetRate = Number(((range.lo + range.hi) / 2).toFixed(2));
+    s.calories = Math.round(s.tdee * range.calMultiplier);
+    const pfc = computePFC(DATA.profile.goal, s.calories, latestWeight());
+    s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
+  }
   saveData(DATA);
 }
 
@@ -493,7 +545,18 @@ function todayStr(){
 
 /* ---------- AI coaching text ---------- */
 
+// Manual-mode status message: no API call, just a deterministic summary of
+// what the TDEE re-estimation did this week.
+function buildManualStatusMessage(context){
+  let msg = `週間体重変化率は${context.avgs.weeklyRate.toFixed(2)}%/weekでした。入力されているカロリー(${context.entry.calories}kcal)と体重推移をもとに、推定TDEEを${context.entry.tdee}kcalに更新しました。`;
+  if(context.phaseEndNote) msg += ' ' + context.phaseEndNote;
+  return msg;
+}
+
 async function generateCoachingMessage(context){
+  if(!DATA.aiMode){
+    return buildManualStatusMessage(context);
+  }
   const goalLabel = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[DATA.profile.goal];
   const sys = `あなたはボディビルダー専属の栄養コーチです。渡された数値データだけをもとに、今週ユーザーが何をすべきかを日本語で2〜4文、具体的かつ簡潔に指示してください。数値の再計算はせず、渡された数値をそのまま根拠として使ってください。丁寧だが端的なコーチの口調で。マークダウンや箇条書きは使わないでください。`;
 
@@ -510,8 +573,7 @@ AIが範囲内で選んだ今週の目標値: ${context.entry.targetRate}%/week 
 PFC: P${DATA.state.protein}g / F${DATA.state.fat}g / C${DATA.state.carb}g
 ${context.phaseEndNote ? '注意: ' + context.phaseEndNote : ''}`;
 
-  if(DATA.apiKey){
-    try{
+  try{
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: apiHeaders(),
@@ -526,9 +588,8 @@ ${context.phaseEndNote ? '注意: ' + context.phaseEndNote : ''}`;
       const text = (data.content || []).map(c=>c.text||'').join('').trim();
       if(text) return text;
     }catch(e){ /* fall through to template */ }
-  }
 
-  // deterministic fallback if no API key is set or the call fails
+  // deterministic fallback if the call fails
   let msg = '';
   if(context.entry.action === 'maintain'){
     msg = `週間体重変化率は${context.avgs.weeklyRate.toFixed(2)}%/weekで、今週の目標(${context.entry.targetRate}%/week、範囲${context.entry.targetRateLo}〜${context.entry.targetRateHi}%/week)に近い状態です。現在の摂取カロリー(${context.entry.calories}kcal)を維持してください。`;
@@ -638,6 +699,12 @@ function renderOnboarding(){
     </div>
   `));
 
+  form.appendChild(el(`
+    <div class="field"><label>推定TDEE (kcal・任意)</label><input type="number" id="f_tdee" step="1" placeholder="他アプリ等で把握している場合のみ入力">
+      <div class="hint">未入力の場合は年齢・身長・体重・運動量から自動計算します。他で測定済みのTDEEが分かる場合はここに入力すると、その値を優先して使います。</div>
+    </div>
+  `));
+
   form.querySelector('#genderGroup').addEventListener('click', e=>{
     const btn = e.target.closest('.choice-btn'); if(!btn) return;
     state.gender = btn.dataset.val;
@@ -686,14 +753,20 @@ function renderOnboarding(){
     // entry at registration. Adjustable later from the settings screen.
     const settings = { cutThreshold: 10, bulkEndBf: 16, competitionBf: 8, miniCutTarget: 8 };
 
-    const tdee = computeInitialTDEE(profile);
+    const tdeeVal = form.querySelector('#f_tdee').value;
+    const manualTdee = tdeeVal !== '' ? Number(tdeeVal) : null;
+    if(manualTdee !== null && (isNaN(manualTdee) || manualTdee <= 0)){
+      alert('推定TDEEは正の数値で入力してください。分からない場合は空欄のままで構いません。');
+      return;
+    }
+    const tdee = manualTdee !== null ? manualTdee : computeInitialTDEE(profile);
     const range = phaseRange(profile.goal, profile.bodyFat, settings);
     const calories = Math.round(tdee * range.calMultiplier);
     const pfc = computePFC(profile.goal, calories, profile.weight);
     const midRate = Number(((range.lo + range.hi) / 2).toFixed(2));
 
     DATA = {
-      profile, settings, apiKey: '',
+      profile, settings, aiMode: true,
       state: {
         tdee, calories,
         targetRate: midRate, targetRateLo: range.lo, targetRateHi: range.hi,
@@ -724,9 +797,13 @@ function renderDashboard(){
   const lastCoaching = DATA.coachingLog[DATA.coachingLog.length-1];
   const canRunWeekly = avgs && avgs.weeklyRate !== null && (!s.lastAdjustmentDate || daysBetween(s.lastAdjustmentDate, todayStr()) >= 7);
 
+  const cardTitle = DATA.aiMode ? '今週のAI指示' : '今週の更新状況';
+  const emptyMsg = DATA.aiMode
+    ? '「更新」を押すと、今週のデータをもとにAIが指示を出します。'
+    : '「更新」を押すと、入力済みのカロリーと体重推移をもとに推定TDEEを更新します。';
   const card = el(`<div class="coach-card">
-    <div class="kicker"><span>今週のAI指示</span><span class="date">${lastCoaching ? lastCoaching.date : ''}</span></div>
-    <p id="coachText">${lastCoaching ? escapeHtml(lastCoaching.message) : (avgs && avgs.weeklyRate !== null ? '「更新」を押すと、今週のデータをもとにAIが指示を出します。' : 'データが7日分たまるまでは1日ごとの体重を記録してください。7日平均が出てから週間の指示が始まります。')}</p>
+    <div class="kicker"><span>${cardTitle}</span><span class="date">${lastCoaching ? lastCoaching.date : ''}</span></div>
+    <p id="coachText">${lastCoaching ? escapeHtml(lastCoaching.message) : (avgs && avgs.weeklyRate !== null ? emptyMsg : 'データが7日分たまるまでは1日ごとの体重を記録してください。7日平均が出てから週間の更新が始まります。')}</p>
     <div class="refresh-row">
       <button class="link-btn" id="refreshCoach">${canRunWeekly ? '今週の指示を更新' : (avgs && avgs.weeklyRate !== null ? '前回の更新から7日未満です' : '')}</button>
     </div>
@@ -747,20 +824,19 @@ function renderDashboard(){
   });
   c.appendChild(card);
 
-  if(!DATA.apiKey){
-    c.appendChild(el(`<div class="hint" style="margin:-10px 0 18px;">AIコーチの判断を使うには、設定画面でAPIキーを登録してください。未登録の間は範囲の中央値を使った簡易版で動作します。</div>`));
-  }
-
   // stat grid
   const weeklyRateStr = avgs && avgs.weeklyRate !== null ? `${avgs.weeklyRate>0?'+':''}${avgs.weeklyRate.toFixed(2)}<small>%/週</small>` : '―';
   const weeklyClass = avgs && avgs.weeklyRate !== null ? (avgs.weeklyRate >= 0 ? 'pos' : 'neg') : '';
+  const targetStatHtml = DATA.aiMode
+    ? `<div class="stat"><div class="label">今週の目標(AI選定)</div><div class="value">${s.targetRate>0?'+':''}${s.targetRate}<small>%/週</small></div><div class="sub">範囲 ${s.targetRateLo}〜${s.targetRateHi}%/週</div></div>`
+    : '';
   const grid = el(`<div class="stat-grid">
     <div class="stat"><div class="label">今日の体重</div><div class="value">${latestWeight().toFixed(1)}<small>kg</small></div></div>
     <div class="stat"><div class="label">今日の体脂肪率</div><div class="value">${bf.toFixed(1)}<small>%</small></div></div>
     <div class="stat"><div class="label">今週7日平均</div><div class="value">${avgs ? avgs.currentAvg.toFixed(2) : '―'}<small>${avgs?'kg':''}</small></div></div>
     <div class="stat"><div class="label">前週7日平均</div><div class="value">${avgs && avgs.prevAvg ? avgs.prevAvg.toFixed(2) : '―'}<small>${avgs&&avgs.prevAvg?'kg':''}</small></div></div>
     <div class="stat"><div class="label">週間体重変化率</div><div class="value ${weeklyClass}">${weeklyRateStr}</div></div>
-    <div class="stat"><div class="label">今週の目標(AI選定)</div><div class="value">${s.targetRate>0?'+':''}${s.targetRate}<small>%/週</small></div><div class="sub">範囲 ${s.targetRateLo}〜${s.targetRateHi}%/週</div></div>
+    ${targetStatHtml}
     <div class="stat"><div class="label">推定TDEE</div><div class="value">${s.tdee}<small>kcal</small></div></div>
     <div class="stat"><div class="label">現在の摂取カロリー</div><div class="value">${s.calories}<small>kcal</small></div></div>
   </div>`);
@@ -841,8 +917,8 @@ function renderChartsView(){
   const tabs = el(`<div class="tabs">
     <div class="tab" data-t="weight">体重</div>
     <div class="tab" data-t="bodyfat">体脂肪率</div>
-    <div class="tab" data-t="calorie">カロリー/TDEE</div>
-    <div class="tab" data-t="pfc">PFC</div>
+    <div class="tab" data-t="leanmass">除脂肪体重</div>
+    <div class="tab" data-t="calorie">カロリー</div>
   </div>`);
   [...tabs.children].forEach(t=>{
     if(t.dataset.t === chartTab) t.classList.add('active');
@@ -891,30 +967,16 @@ function drawChart(){
     datasets = [
       { label:'体脂肪率', data: logs.map(l=>l.bodyFat), borderColor:'#C1584B', backgroundColor:'transparent', tension:0.25, pointRadius:2 }
     ];
+  } else if(chartTab === 'leanmass'){
+    datasets = [
+      { label:'除脂肪体重', data: logs.map(l=> Number((l.weight * (1 - l.bodyFat/100)).toFixed(1))), borderColor:'#5C9B6E', backgroundColor:'transparent', tension:0.25, pointRadius:2 }
+    ];
   } else if(chartTab === 'calorie'){
     const adj = DATA.adjustmentLog || [];
     const calByDate = {}; adj.forEach(a=>calByDate[a.date]=a.calories);
-    const tdeeByDate = {}; adj.forEach(a=>tdeeByDate[a.date]=a.tdee);
     datasets = [
-      { label:'設定カロリー(処方値)', data: logs.map(l=> calByDate[l.date] || null), borderColor:'#E3A93B', backgroundColor:'transparent', tension:0.1, pointRadius:2, spanGaps:true },
-      { label:'推定TDEE', data: logs.map(l=> tdeeByDate[l.date] || null), borderColor:'#5C9B6E', backgroundColor:'transparent', tension:0.1, pointRadius:2, spanGaps:true }
+      { label:'摂取カロリー', data: logs.map(l=> calByDate[l.date] || null), borderColor:'#E3A93B', backgroundColor:'transparent', tension:0.1, pointRadius:2, spanGaps:true }
     ];
-  } else if(chartTab === 'pfc'){
-    // approximate historical PFC from adjustment log snapshots is not tracked per-day;
-    // show current PFC breakdown as a simple bar instead of a misleading timeseries.
-    canvas.parentElement.innerHTML = `<div style="display:flex;height:100%;align-items:flex-end;gap:20px;justify-content:center;padding-bottom:10px;">
-      ${['protein','fat','carb'].map(k=>{
-        const val = DATA.state[k];
-        const label = {protein:'P',fat:'F',carb:'C'}[k];
-        const color = {protein:'#E3A93B',fat:'#C1584B',carb:'#5C9B6E'}[k];
-        const h = Math.min(180, val/3);
-        return `<div style="text-align:center;">
-          <div style="width:44px;height:${h}px;background:${color};margin:0 auto;"></div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">${label} ${val}g</div>
-        </div>`;
-      }).join('')}
-    </div>`;
-    return;
   }
 
   chartInstance = new Chart(canvas, { type:'line', data:{ labels, datasets }, options: baseOpts });
@@ -923,19 +985,6 @@ function drawChart(){
 /* ---- settings view ---- */
 function renderSettingsView(){
   const c = el('<div class="dash"></div>');
-
-  c.appendChild(el('<div class="section-title">AIコーチ (APIキー)</div>'));
-  const apiBlock = el(`<div class="settings-block">
-    <div class="field"><label>APIキー</label><input type="password" id="s_apiKey" placeholder="APIキーを入力" value="${DATA.apiKey || ''}"></div>
-    <div class="small-note">このアプリはブラウザ単体で動作します。AIによる週次コーチングを使うには、APIキーをここに入力してください。キーはこの端末のブラウザ内だけに保存され、AIサービスとの通信にのみ使われます。未入力の場合は範囲の中央値を使った簡易ロジックで動作します。</div>
-    <button type="button" class="btn-secondary" id="saveApiKey" style="margin-top:12px;">キーを保存</button>
-  </div>`);
-  apiBlock.querySelector('#saveApiKey').addEventListener('click', ()=>{
-    DATA.apiKey = apiBlock.querySelector('#s_apiKey').value.trim();
-    saveData(DATA);
-    render();
-  });
-  c.appendChild(apiBlock);
 
   c.appendChild(el('<div class="section-title">プロフィール</div>'));
   const p = DATA.profile;
@@ -1026,29 +1075,58 @@ function renderSettingsView(){
   });
   c.appendChild(goalBlock);
 
-  c.appendChild(el('<div class="section-title">フェーズ設定</div>'));
-  const block = el('<div class="settings-block"></div>');
-  if(p.goal === 'bulk'){
-    block.appendChild(el(`<div class="field"><label>増量終了の目安体脂肪率(%)</label><input type="number" step="0.1" id="s_bulkEnd" value="${DATA.settings.bulkEndBf}"></div>`));
-  } else if(p.goal === 'cut'){
-    block.appendChild(el(`<div class="field"><label>減速閾値の体脂肪率(%)</label><input type="number" step="0.1" id="s_cutThresh" value="${DATA.settings.cutThreshold}"></div>`));
-    block.appendChild(el(`<div class="field" style="margin-top:10px;"><label>減量終了目標体脂肪率(%)</label><input type="number" step="0.1" id="s_compBf" value="${DATA.settings.competitionBf}"></div>`));
-  } else {
-    block.appendChild(el(`<div class="field"><label>ミニカット目標体脂肪率(%)</label><input type="number" step="0.1" id="s_miniTarget" value="${DATA.settings.miniCutTarget}"></div>`));
-  }
-  block.appendChild(el(`<button type="button" class="btn-secondary" id="saveSettings" style="margin-top:14px;">設定を保存</button>`));
-  block.querySelector('#saveSettings').addEventListener('click', ()=>{
-    if(p.goal === 'bulk') DATA.settings.bulkEndBf = Number(block.querySelector('#s_bulkEnd').value);
-    else if(p.goal === 'cut'){
-      DATA.settings.cutThreshold = Number(block.querySelector('#s_cutThresh').value);
-      DATA.settings.competitionBf = Number(block.querySelector('#s_compBf').value);
-    } else {
-      DATA.settings.miniCutTarget = Number(block.querySelector('#s_miniTarget').value);
+  c.appendChild(el('<div class="section-title">AIモード</div>'));
+  const aiBlock = el(`<div class="settings-block">
+    <div class="choice-group two" id="aiModeGroup">
+      <button type="button" class="choice-btn ${DATA.aiMode?'active':''}" data-val="on">ON</button>
+      <button type="button" class="choice-btn ${!DATA.aiMode?'active':''}" data-val="off">OFF</button>
+    </div>
+    <div class="hint" style="margin-top:10px;">ONの場合、AIが週次で摂取カロリーとPFCを自動設定します。OFFの場合、摂取カロリーとPFCはこの画面で手入力します。どちらの場合も、推定TDEEは体重の推移をもとに自動で更新され続けます。</div>
+  </div>`);
+  aiBlock.querySelector('#aiModeGroup').addEventListener('click', e=>{
+    const btn = e.target.closest('.choice-btn'); if(!btn) return;
+    const newMode = btn.dataset.val === 'on';
+    if(newMode === DATA.aiMode) return;
+    const label = newMode ? 'ON' : 'OFF';
+    if(confirm(`AIモードを${label}に切り替えますか？`)){
+      toggleAiMode(newMode);
+      render();
     }
-    saveData(DATA);
-    render();
   });
-  c.appendChild(block);
+  c.appendChild(aiBlock);
+
+  if(!DATA.aiMode){
+    c.appendChild(el('<div class="section-title">カロリー・マクロ設定 (手入力)</div>'));
+    const s = DATA.state;
+    const macroForm = el(`<form class="settings-block" id="macroForm">
+      <div class="field"><label>摂取カロリー (kcal)</label><input type="number" id="m_cal" value="${s.calories}" required></div>
+      <div class="row2" style="margin-top:12px;">
+        <div class="field"><label>タンパク質 (g)</label><input type="number" id="m_p" value="${s.protein}" required></div>
+        <div class="field"><label>脂質 (g)</label><input type="number" id="m_f" value="${s.fat}" required></div>
+      </div>
+      <div class="field" style="margin-top:12px;"><label>炭水化物 (g)</label><input type="number" id="m_c" value="${s.carb}" required></div>
+      <div class="hint" style="margin-top:10px;">この値がそのまま摂取カロリー・PFCとして使われます。推定TDEEは、このカロリーと体重推移をもとに引き続き自動更新されます。</div>
+      <button type="submit" class="btn-secondary" style="margin-top:14px;">保存</button>
+    </form>`);
+    macroForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const calVal = Number(macroForm.querySelector('#m_cal').value);
+      const pVal = Number(macroForm.querySelector('#m_p').value);
+      const fVal = Number(macroForm.querySelector('#m_f').value);
+      const cVal = Number(macroForm.querySelector('#m_c').value);
+      if([calVal,pVal,fVal,cVal].some(v=>isNaN(v) || v < 0)){
+        alert('数値を正しく入力してください。');
+        return;
+      }
+      s.calories = Math.round(calVal);
+      s.protein = Math.round(pVal);
+      s.fat = Math.round(fVal);
+      s.carb = Math.round(cVal);
+      saveData(DATA);
+      render();
+    });
+    c.appendChild(macroForm);
+  }
 
   const danger = el('<div class="danger-zone"><button id="resetAll">すべてのデータを削除してリセット</button></div>');
   danger.querySelector('#resetAll').addEventListener('click', ()=>{
