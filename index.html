@@ -22,8 +22,10 @@
   --danger:#C1584B;
   --radius:2px;
 }
+
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
+
 body{
   background:var(--bg);
   color:var(--text);
@@ -31,51 +33,123 @@ body{
   -webkit-font-smoothing:antialiased;
   padding-bottom:64px;
 }
+
 h1,h2,h3,.num{
   font-family:'Barlow Condensed',sans-serif;
   font-weight:700;
   letter-spacing:0.01em;
 }
+
 ::selection{background:var(--amber);color:#141414;}
 a{color:inherit;}
 
 /* Top bar */
 .topbar{
-  position:sticky;top:0;z-index:50;
+  position:sticky;
+  top:0;
+  z-index:50;
   background:rgba(14,15,18,0.92);
   backdrop-filter:blur(6px);
   border-bottom:1px solid var(--border);
   padding:14px 18px;
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
 }
+
 .brand{
-  display:flex;align-items:baseline;gap:8px;
+  display:flex;
+  align-items:baseline;
+  gap:8px;
 }
+
 .brand .mark{
-  width:10px;height:10px;background:var(--amber);
-  display:inline-block;transform:rotate(45deg);
+  width:10px;
+  height:10px;
+  background:var(--amber);
+  display:inline-block;
+  transform:rotate(45deg);
 }
-.brand h1{font-size:22px;margin:0;line-height:1;}
+
+.brand h1{
+  font-size:22px;
+  margin:0;
+  line-height:1;
+}
+
 .phase-badge{
-  font-size:12px;padding:4px 10px;border:1px solid var(--border);
+  font-size:12px;
+  padding:4px 10px;
+  border:1px solid var(--border);
   color:var(--text-muted);
 }
-.phase-badge.bulk{color:var(--bulk);border-color:var(--bulk);}
-.phase-badge.cut{color:var(--cut);border-color:var(--cut);}
 
-.wrap{max-width:640px;margin:0 auto;padding:0 16px;}
+.phase-badge.bulk{
+  color:var(--bulk);
+  border-color:var(--bulk);
+}
+
+.phase-badge.cut{
+  color:var(--cut);
+  border-color:var(--cut);
+}
+
+.wrap{
+  max-width:640px;
+  margin:0 auto;
+  padding:0 16px;
+}
 
 /* Onboarding */
-.onboard{padding:32px 0 60px;}
-.onboard-hero{margin-bottom:28px;}
-.onboard-hero .kicker{color:var(--amber);font-size:13px;font-weight:600;letter-spacing:0.02em;}
-.onboard-hero h2{font-size:34px;margin:6px 0 8px;line-height:1.05;}
-.onboard-hero p{color:var(--text-muted);font-size:15px;line-height:1.6;max-width:46ch;}
+.onboard{
+  padding:32px 0 60px;
+}
 
-form{display:flex;flex-direction:column;gap:18px;}
-.field{display:flex;flex-direction:column;gap:6px;}
-.field label{font-size:13px;color:var(--text-muted);}
-.field input[type=number],.field input[type=text],.field select{
+.onboard-hero{
+  margin-bottom:28px;
+}
+
+.onboard-hero .kicker{
+  color:var(--amber);
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.02em;
+}
+
+.onboard-hero h2{
+  font-size:34px;
+  margin:6px 0 8px;
+  line-height:1.05;
+}
+
+.onboard-hero p{
+  color:var(--text-muted);
+  font-size:15px;
+  line-height:1.6;
+  max-width:46ch;
+}
+
+form{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.field label{
+  font-size:13px;
+  color:var(--text-muted);
+}
+
+.field input[type=number],
+.field input[type=text],
+.field input[type=date],
+.field select{
   background:var(--surface);
   border:1px solid var(--border);
   color:var(--text);
@@ -85,1191 +159,313 @@ form{display:flex;flex-direction:column;gap:18px;}
   font-family:'Inter',sans-serif;
   width:100%;
 }
-.field input:focus,.field select:focus{outline:none;border-color:var(--amber);}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.choice-group{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.choice-group.two{grid-template-columns:repeat(2,1fr);}
-.choice-btn{
-  background:var(--surface);border:1px solid var(--border);color:var(--text-muted);
-  padding:12px 8px;text-align:center;font-size:14px;cursor:pointer;border-radius:var(--radius);
+
+.field input:focus,
+.field select:focus{
+  outline:none;
+  border-color:var(--amber);
 }
-.choice-btn.active{border-color:var(--amber);color:var(--amber);background:rgba(227,169,59,0.08);}
+
+.row2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.choice-group{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+
+.choice-group.two{
+  grid-template-columns:repeat(2,1fr);
+}
+
+.choice-btn{
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--text-muted);
+  padding:12px 8px;
+  text-align:center;
+  font-size:14px;
+  cursor:pointer;
+  border-radius:var(--radius);
+}
+
+.choice-btn.active{
+  border-color:var(--amber);
+  color:var(--amber);
+  background:rgba(227,169,59,0.08);
+}
 
 .btn-primary{
-  background:var(--amber);color:#141414;border:none;
-  padding:15px;font-size:16px;font-weight:600;cursor:pointer;
-  border-radius:var(--radius);margin-top:8px;font-family:'Inter',sans-serif;
+  background:var(--amber);
+  color:#141414;
+  border:none;
+  padding:15px;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  border-radius:var(--radius);
+  margin-top:8px;
+  font-family:'Inter',sans-serif;
 }
-.btn-primary:disabled{opacity:0.4;}
+
+.btn-primary:disabled{
+  opacity:0.4;
+}
+
 .btn-secondary{
-  background:transparent;color:var(--text);border:1px solid var(--border);
-  padding:13px;font-size:15px;cursor:pointer;border-radius:var(--radius);font-family:'Inter',sans-serif;
+  background:transparent;
+  color:var(--text);
+  border:1px solid var(--border);
+  padding:13px;
+  font-size:15px;
+  cursor:pointer;
+  border-radius:var(--radius);
+  font-family:'Inter',sans-serif;
 }
-.hint{font-size:12px;color:var(--text-muted);line-height:1.5;}
+
+.hint{
+  font-size:12px;
+  color:var(--text-muted);
+  line-height:1.5;
+}
 
 /* Dashboard */
-.dash{padding:20px 0 40px;}
+.dash{
+  padding:20px 0 40px;
+}
+
 .coach-card{
   background:var(--surface);
   border-left:3px solid var(--amber);
   padding:20px 18px;
   margin-bottom:22px;
 }
-.coach-card .kicker{color:var(--amber);font-size:12px;font-weight:600;letter-spacing:0.03em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
-.coach-card .kicker span.date{color:var(--text-muted);font-weight:400;}
-.coach-card p{font-size:15.5px;line-height:1.65;margin:0;white-space:pre-wrap;}
-.coach-card .refresh-row{margin-top:14px;display:flex;gap:10px;align-items:center;}
-.link-btn{background:none;border:none;color:var(--amber);font-size:13px;cursor:pointer;padding:0;font-family:'Inter',sans-serif;}
-.loading-dot{color:var(--text-muted);font-size:13px;}
+
+.coach-card .kicker{
+  color:var(--amber);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.03em;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.coach-card .kicker span.date{
+  color:var(--text-muted);
+  font-weight:400;
+}
+
+.coach-card p{
+  font-size:15.5px;
+  line-height:1.65;
+  margin:0;
+  white-space:pre-wrap;
+}
+
+.coach-card .refresh-row{
+  margin-top:14px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.link-btn{
+  background:none;
+  border:none;
+  color:var(--amber);
+  font-size:13px;
+  cursor:pointer;
+  padding:0;
+  font-family:'Inter',sans-serif;
+}
+
+.loading-dot{
+  color:var(--text-muted);
+  font-size:13px;
+}
 
 .stat-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:1px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1px;
   background:var(--border);
   border:1px solid var(--border);
   margin-bottom:18px;
 }
-.stat{background:var(--surface);padding:14px 16px;}
-.stat .label{font-size:11.5px;color:var(--text-muted);text-transform:none;margin-bottom:4px;}
-.stat .value{font-size:26px;line-height:1;font-family:'Barlow Condensed',sans-serif;font-weight:600;}
-.stat .value small{font-size:14px;color:var(--text-muted);font-weight:500;margin-left:2px;}
-.stat .sub{font-size:11.5px;color:var(--text-muted);margin-top:3px;}
-.stat .value.pos{color:var(--bulk);}
-.stat .value.neg{color:var(--cut);}
 
-.pfc-row{display:flex;border:1px solid var(--border);margin-bottom:18px;}
-.pfc-item{flex:1;padding:14px;text-align:center;border-right:1px solid var(--border);}
-.pfc-item:last-child{border-right:none;}
-.pfc-item .label{font-size:11px;color:var(--text-muted);}
-.pfc-item .value{font-size:20px;font-family:'Barlow Condensed',sans-serif;font-weight:600;margin-top:3px;}
+.stat{
+  background:var(--surface);
+  padding:14px 16px;
+}
 
-.section-title{font-size:13px;color:var(--text-muted);margin:26px 0 10px;letter-spacing:0.02em;}
+.stat .label{
+  font-size:11.5px;
+  color:var(--text-muted);
+  text-transform:none;
+  margin-bottom:4px;
+}
 
-.log-form{background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:10px;}
-.log-form .row2{margin-bottom:12px;}
+.stat .value{
+  font-size:26px;
+  line-height:1;
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:600;
+}
 
-.tabs{display:flex;gap:2px;margin-bottom:14px;border:1px solid var(--border);}
-.tab{flex:1;text-align:center;padding:10px;font-size:13px;color:var(--text-muted);cursor:pointer;background:var(--surface);}
-.tab.active{color:var(--amber);background:var(--surface-2);}
-.chart-box{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:16px;height:230px;}
-.chart-box canvas{max-height:100%;}
+.stat .value small{
+  font-size:14px;
+  color:var(--text-muted);
+  font-weight:500;
+  margin-left:2px;
+}
+
+.stat .sub{
+  font-size:11.5px;
+  color:var(--text-muted);
+  margin-top:3px;
+}
+
+.stat .value.pos{
+  color:var(--bulk);
+}
+
+.stat .value.neg{
+  color:var(--cut);
+}
+
+.pfc-row{
+  display:flex;
+  border:1px solid var(--border);
+  margin-bottom:18px;
+}
+
+.pfc-item{
+  flex:1;
+  padding:14px;
+  text-align:center;
+  border-right:1px solid var(--border);
+}
+
+.pfc-item:last-child{
+  border-right:none;
+}
+
+.pfc-item .label{
+  font-size:11px;
+  color:var(--text-muted);
+}
+
+.pfc-item .value{
+  font-size:20px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:600;
+  margin-top:3px;
+}
+
+.section-title{
+  font-size:13px;
+  color:var(--text-muted);
+  margin:26px 0 10px;
+  letter-spacing:0.02em;
+}
+
+.log-form{
+  background:var(--surface);
+  border:1px solid var(--border);
+  padding:16px;
+  margin-bottom:10px;
+}
+
+.log-form .row2{
+  margin-bottom:12px;
+}
+
+.tabs{
+  display:flex;
+  gap:2px;
+  margin-bottom:14px;
+  border:1px solid var(--border);
+}
+
+.tab{
+  flex:1;
+  text-align:center;
+  padding:10px;
+  font-size:13px;
+  color:var(--text-muted);
+  cursor:pointer;
+  background:var(--surface);
+}
+
+.tab.active{
+  color:var(--amber);
+  background:var(--surface-2);
+}
+
+.chart-box{
+  background:var(--surface);
+  border:1px solid var(--border);
+  padding:14px;
+  margin-bottom:16px;
+  height:230px;
+}
+
+.chart-box canvas{
+  max-height:100%;
+}
 
 .footer-nav{
-  position:fixed;bottom:0;left:0;right:0;
-  background:rgba(14,15,18,0.95);backdrop-filter:blur(6px);
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:rgba(14,15,18,0.95);
+  backdrop-filter:blur(6px);
   border-top:1px solid var(--border);
-  display:flex;z-index:50;
+  display:flex;
+  z-index:50;
 }
+
 .nav-btn{
-  flex:1;text-align:center;padding:12px 0 10px;font-size:12px;color:var(--text-muted);
-  background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;
-}
-.nav-btn.active{color:var(--amber);}
-.nav-btn .ico{display:block;font-size:16px;margin-bottom:3px;}
-
-.settings-block{background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:14px;}
-.settings-block h3{font-size:15px;margin:0 0 12px;font-weight:600;}
-.danger-zone{margin-top:30px;}
-.danger-zone button{width:100%;background:none;border:1px solid var(--cut);color:var(--cut);padding:12px;cursor:pointer;border-radius:var(--radius);}
-
-.hidden{display:none !important;}
-.small-note{font-size:11.5px;color:var(--text-muted);margin-top:6px;}
-</style>
-</head>
-<body>
-
-<div id="app"></div>
-
-<div class="footer-nav hidden" id="footerNav">
-  <button class="nav-btn" data-view="dashboard"><span class="ico">◆</span>ダッシュボード</button>
-  <button class="nav-btn" data-view="log"><span class="ico">＋</span>記録する</button>
-  <button class="nav-btn" data-view="charts"><span class="ico">▲</span>グラフ</button>
-  <button class="nav-btn" data-view="settings"><span class="ico">⚙</span>設定</button>
-</div>
-
-<script>
-/* =========================================================
-   IRON LOG — bodyweight/bodyfat driven AI bulk/cut coach
-   All numeric logic lives in JS. The AI API is only ever
-   asked to phrase coaching guidance from numbers we give it.
-========================================================= */
-
-const STORE_KEY = 'ironlog_data_v1';
-
-function loadData(){
-  try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if(!raw) return null;
-    const d = JSON.parse(raw);
-    // backward compat: data saved before AI mode existed defaults to ON
-    if(d && d.aiMode === undefined) d.aiMode = true;
-    return d;
-  }catch(e){ return null; }
-}
-function saveData(d){
-  try{
-    localStorage.setItem(STORE_KEY, JSON.stringify(d));
-    return true;
-  }catch(e){
-    alert('データの保存に失敗しました。ブラウザのサイトデータ/Cookie設定（プライベートブラウジングなど）をご確認ください。\n(' + e.message + ')');
-    return false;
-  }
+  flex:1;
+  text-align:center;
+  padding:12px 0 10px;
+  font-size:12px;
+  color:var(--text-muted);
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
 }
 
-let DATA = loadData();
-let currentView = 'dashboard';
-let chartTab = 'weight';
-
-/* ---------- calculation engine ---------- */
-
-function computeBMR(p){
-  const base = 10*p.weight + 6.25*p.height - 5*p.age;
-  return p.gender === 'male' ? base + 5 : base - 161;
-}
-const ACTIVITY_MULT = { low:1.375, medium:1.55, high:1.725 };
-
-function computeInitialTDEE(p){
-  return Math.round(computeBMR(p) * ACTIVITY_MULT[p.activity]);
+.nav-btn.active{
+  color:var(--amber);
 }
 
-// returns {calMultiplier, lo, hi} — a *range* of acceptable weekly weight-change
-// rates for the current body-fat reading. The specific point within [lo,hi]
-// that becomes this week's target is chosen by the AI coaching call (see
-// decideTargetRate), not hardcoded here.
-function phaseRange(goal, bf, settings){
-  if(goal === 'bulk'){
-    // overall bulk range across a whole bulk: 0.25%〜0.50%/week
-    if(bf < 13) return { calMultiplier: 1.10, lo: 0.35, hi: 0.50 };
-    return { calMultiplier: 1.05, lo: 0.25, hi: 0.35 };
-  }
-  if(goal === 'cut'){
-    if(bf > settings.cutThreshold) return { calMultiplier: 0.80, lo: -1.00, hi: -0.75 };
-    return { calMultiplier: 0.80, lo: -0.75, hi: -0.50 };
-  }
-  // minicut: short, single aggressive range (no body-fat split)
-  return { calMultiplier: 0.80, lo: -1.00, hi: -0.75 };
+.nav-btn .ico{
+  display:block;
+  font-size:16px;
+  margin-bottom:3px;
 }
 
-function computePFC(goal, calories, weightKg){
-  let pPerKg, fPerKg;
-  if(goal === 'bulk'){ pPerKg = 1.9; fPerKg = 0.8; }
-  else { pPerKg = 2.6; fPerKg = 0.6; } // cut & minicut
-
-  const protein = Math.round(pPerKg * weightKg);
-  const fat = Math.round(fPerKg * weightKg);
-  const remaining = Math.max(0, calories - protein*4 - fat*9);
-  const carb = Math.round(remaining / 4);
-  return { protein, fat, carb };
+.settings-block{
+  background:var(--surface);
+  border:1px solid var(--border);
+  padding:16px;
+  margin-bottom:14px;
 }
 
-function avg(arr){ return arr.reduce((a,b)=>a+b,0) / arr.length; }
-
-function sortedLogs(){
-  return [...DATA.logs].sort((a,b)=> a.date.localeCompare(b.date));
+.settings-block h3{
+  font-size:15px;
+  margin:0 0 12px;
+  font-weight:600;
 }
 
-// last N days ending at (and including) the most recent log, walking backward
-function lastNDays(n, offsetFromEnd){
-  const logs = sortedLogs();
-  offsetFromEnd = offsetFromEnd || 0;
-  const end = logs.length - offsetFromEnd;
-  const slice = logs.slice(Math.max(0, end - n), end);
-  return slice;
-}
-
-function computeAverages(){
-  const logs = sortedLogs();
-  if(logs.length < 7) return null;
-  const current7 = lastNDays(7, 0);
-  const currentAvg = avg(current7.map(l=>l.weight));
-  let prevAvg = null, weeklyRate = null;
-  if(logs.length >= 14){
-    const prev7 = lastNDays(7, 7);
-    prevAvg = avg(prev7.map(l=>l.weight));
-    weeklyRate = (currentAvg - prevAvg) / prevAvg * 100;
-  }
-  return { currentAvg, prevAvg, weeklyRate, count: logs.length };
-}
-
-function latestBF(){
-  const logs = sortedLogs();
-  return logs.length ? logs[logs.length-1].bodyFat : DATA.profile.bodyFat;
-}
-function latestWeight(){
-  const logs = sortedLogs();
-  return logs.length ? logs[logs.length-1].weight : DATA.profile.weight;
-}
-
-// Body-fat-%-target simulator. Requires >=14 days of logs (2 full 7-day
-// windows). Builds up to 8 non-overlapping 7-day windows of body-fat/weight
-// averages (oldest -> newest), derives a simple weekly rate of body-fat
-// change from the first vs last window, and — if that rate points toward
-// the goal's target bf% — projects a week-by-week table until reaching it.
-const SIM_TARGET_BF = { bulk: 16, cut: 6, minicut: 8 };
-
-function computeBfSimulation(){
-  const logs = sortedLogs();
-  if(logs.length < 14) return null;
-
-  const windows = [];
-  for(let off = 0; windows.length < 8; off += 7){
-    const slice = lastNDays(7, off);
-    if(slice.length < 7) break;
-    windows.push({
-      avgBf: avg(slice.map(l=>l.bodyFat)),
-      avgWeight: avg(slice.map(l=>l.weight))
-    });
-  }
-  windows.reverse(); // oldest -> newest
-  if(windows.length < 2) return null;
-
-  const first = windows[0], last = windows[windows.length-1];
-  const weeksSpan = windows.length - 1;
-  const bfRatePerWeek = (last.avgBf - first.avgBf) / weeksSpan;
-  const currentBf = last.avgBf;
-
-  const goal = DATA.profile.goal;
-  const targetBf = SIM_TARGET_BF[goal];
-  const needsRise = goal === 'bulk';
-  const validDirection = needsRise
-    ? (bfRatePerWeek > 0.001 && currentBf < targetBf)
-    : (bfRatePerWeek < -0.001 && currentBf > targetBf);
-
-  if(!validDirection){
-    return { possible: false, goal, currentBf, targetBf, bfRatePerWeek, weeksSpan };
-  }
-
-  const totalWeeks = Math.ceil(Math.abs((targetBf - currentBf) / bfRatePerWeek));
-  const stepWeeks = Math.max(1, Math.round(totalWeeks / 8));
-  const rows = [];
-  const today = new Date();
-  for(let w = stepWeeks; w < totalWeeks; w += stepWeeks){
-    const projBf = currentBf + bfRatePerWeek * w;
-    const d = new Date(today); d.setDate(d.getDate() + w * 7);
-    rows.push({ week: w, date: d.toISOString().slice(0,10), bf: Number(projBf.toFixed(1)) });
-  }
-  const finalDate = new Date(today); finalDate.setDate(finalDate.getDate() + totalWeeks * 7);
-  rows.push({ week: totalWeeks, date: finalDate.toISOString().slice(0,10), bf: targetBf });
-
-  return { possible: true, goal, currentBf, targetBf, bfRatePerWeek, totalWeeks, rows, weeksSpan };
-}
-
-const STEP_MIN = 100, STEP_MAX = 200, STEP_DEFAULT = 150;
-
-// AIコーチ機能用のAPIキー。ユーザー入力欄は廃止し、ここに固定で埋め込みます。
-// 注意: このファイルは静的にホストされているため、ページのソースを見れば
-// 誰でもこのキーを読み取れます。悪用・不正利用・想定外の課金につながる
-// リスクがあるため、公開ホスティングで使う場合は必ず利用上限(スペンドリ
-// ミット)を設定し、キーが漏れても被害を抑えられるようにしてください。
-const EMBEDDED_API_KEY = "ここに自分のAnthropic APIキーを貼り付けてください";
-
-function apiHeaders(){
-  return {
-    "Content-Type": "application/json",
-    "x-api-key": EMBEDDED_API_KEY,
-    "anthropic-version": "2023-06-01",
-    "anthropic-dangerous-direct-browser-access": "true"
-  };
-}
-function extractJson(text){
-  const match = text.match(/\{[\s\S]*\}/);
-  return match ? JSON.parse(match[0]) : JSON.parse(text);
-}
-
-// AI picks the specific weekly target rate within the mandated [lo,hi] range,
-// based on recent trend. All downstream math (diff vs target, kcal step,
-// PFC, TDEE) stays fully deterministic in JS — this call only supplies the
-// judgment-based target point, clamped to the range as a safety net.
-async function decideTargetRate(range, ctx){
-  const mid = (range.lo + range.hi) / 2;
-  try{
-    const sys = `あなたはボディビルダーの栄養コーチです。与えられた範囲[${range.lo}%〜${range.hi}%]/週の中から、直近の体重推移をもとに今週目指すべき体重変化率を1つだけ選んでください。範囲の外の値は絶対に選ばないでください。JSON以外の文字は一切出力せず、次の形式だけを返してください: {"targetRate": 数値, "reason": "一言(20字程度)"}`;
-    const u = `フェーズ: ${ctx.goalLabel}
-現在の体脂肪率: ${ctx.bf}%
-直近の7日平均体重の推移(古い→新しい): ${ctx.recentAvgs.map(v=>v.toFixed(2)).join(' → ')}kg
-前回の目標変化率: ${ctx.prevTargetRate !== null ? ctx.prevTargetRate + '%/週' : 'なし(初回)'}
-選べる範囲: ${range.lo}%〜${range.hi}%/週`;
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: apiHeaders(),
-      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 200, system: sys, messages: [{ role:"user", content:u }] })
-    });
-    const data = await response.json();
-    const text = (data.content || []).map(c=>c.text||'').join('').trim();
-    const parsed = extractJson(text);
-    let rate = Number(parsed.targetRate);
-    if(isNaN(rate)) rate = mid;
-    rate = Math.max(range.lo, Math.min(range.hi, rate));
-    return { targetRate: Number(rate.toFixed(2)), rationale: parsed.reason || '' };
-  }catch(e){
-    return { targetRate: Number(mid.toFixed(2)), rationale: 'AI呼び出しに失敗したため範囲の中央値を暫定使用しています。' };
-  }
-}
-
-// The weekly engine. In AI mode: phase-range selection -> AI picks target
-// within range -> compare to actual -> adjust calories -> recompute PFC.
-// In manual mode: calories/PFC are whatever the user set in Settings; only
-// TDEE re-estimation runs. TDEE re-estimation itself is common to both
-// modes and always runs last, using s.calories (AI-set or manually-set) as
-// the assumed intake for the comparison week.
-async function runWeeklyEngine(){
-  const s = DATA.state;
-  const avgs = computeAverages();
-  if(!avgs || avgs.weeklyRate === null) return null;
-
-  const bf = latestBF();
-  let entry;
-
-  if(DATA.aiMode){
-    const range = phaseRange(DATA.profile.goal, bf, DATA.settings);
-    const rangeChanged = (s.targetRateLo !== range.lo || s.targetRateHi !== range.hi);
-
-    const logs = sortedLogs();
-    const recentAvgs = [];
-    for(let off = 21; off >= 0; off -= 7){
-      const slice = lastNDays(7, off);
-      if(slice.length === 7) recentAvgs.push(avg(slice.map(l=>l.weight)));
-    }
-    const goalLabel = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[DATA.profile.goal];
-
-    const decision = await decideTargetRate(range, {
-      goalLabel, bf, recentAvgs, prevTargetRate: s.targetRate
-    });
-
-    let forcedReset = false;
-    if(rangeChanged){
-      s.calories = Math.round(s.tdee * range.calMultiplier);
-      forcedReset = true;
-    }
-    s.targetRateLo = range.lo;
-    s.targetRateHi = range.hi;
-    s.targetRate = decision.targetRate;
-
-    const diff = avgs.weeklyRate - s.targetRate;
-    let adjustment = 0;
-    let action = 'maintain';
-    if(!forcedReset){
-      if(diff > 0.1){
-        adjustment = -STEP_DEFAULT;
-        action = 'decrease';
-      } else if(diff < -0.1){
-        adjustment = STEP_DEFAULT;
-        action = 'increase';
-      }
-      s.calories = Math.max(1200, s.calories + adjustment);
-    }
-
-    // PFC recompute
-    const pfc = computePFC(DATA.profile.goal, s.calories, latestWeight());
-    s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
-
-    entry = {
-      date: todayStr(),
-      mode: 'ai',
-      weeklyRate: avgs.weeklyRate,
-      targetRate: s.targetRate,
-      targetRateLo: range.lo,
-      targetRateHi: range.hi,
-      rationale: decision.rationale,
-      bodyFat: bf,
-      calories: s.calories,
-      action, forcedReset
-    };
-  } else {
-    // Manual mode: calories/PFC are left exactly as the user set them in
-    // Settings. Nothing to decide here — only TDEE re-estimation below.
-    entry = {
-      date: todayStr(),
-      mode: 'manual',
-      weeklyRate: avgs.weeklyRate,
-      bodyFat: bf,
-      calories: s.calories
-    };
-  }
-
-  // TDEE re-estimation from realized data: since we no longer collect a logged
-  // intake figure, assume adherence to the calories currently set (whether
-  // AI-set or manually-set) over the comparison week and compare that to the
-  // actual weight trend. Runs regardless of AI mode.
-  if(avgs.prevAvg !== null){
-    const assumedIntake = s.calories;
-    const expectedWeeklyKg = (assumedIntake - s.tdee) * 7 / 7700;
-    const actualWeeklyKg = (avgs.currentAvg - avgs.prevAvg);
-    const errorKg = actualWeeklyKg - expectedWeeklyKg;
-    let tdeeAdj = (errorKg * 7700 / 7) * 0.5; // damped
-    tdeeAdj = Math.max(-100, Math.min(100, tdeeAdj));
-    s.tdee = Math.round(s.tdee + tdeeAdj);
-  }
-  entry.tdee = s.tdee;
-
-  s.lastAdjustmentDate = todayStr();
-  s.phase = DATA.profile.goal;
-
-  DATA.adjustmentLog = DATA.adjustmentLog || [];
-  DATA.adjustmentLog.push(entry);
-
-  return { avgs, entry, bf };
-}
-
-// Recompute calories/PFC/target-rate range when the user manually switches
-// goal from settings, but only in AI mode — in manual mode the user's own
-// calorie/PFC entries are left untouched. TDEE itself is never touched here
-// (it's a property of the body/activity level, not the goal).
-// Recompute TDEE/calories/PFC/target-rate range from scratch after the user
-// corrects their basic profile info (age/gender/height/activity) or their
-// baseline weight/body-fat from the settings screen. Also writes the
-// corrected weight/body-fat into today's log entry so it's reflected
-// immediately in the dashboard and averages.
-function updateProfileBasics(vals){
-  const p = DATA.profile;
-  p.age = vals.age;
-  p.gender = vals.gender;
-  p.height = vals.height;
-  p.activity = vals.activity;
-  p.weight = vals.weight;
-  p.bodyFat = vals.bodyFat;
-
-  const idx = DATA.logs.findIndex(l=>l.date === todayStr());
-  if(idx >= 0){ DATA.logs[idx].weight = vals.weight; DATA.logs[idx].bodyFat = vals.bodyFat; }
-  else { DATA.logs.push({ date: todayStr(), weight: vals.weight, bodyFat: vals.bodyFat }); }
-
-  const s = DATA.state;
-  s.tdee = computeInitialTDEE(p);
-  const range = phaseRange(p.goal, vals.bodyFat, DATA.settings);
-  s.calories = Math.round(s.tdee * range.calMultiplier);
-  s.targetRateLo = range.lo;
-  s.targetRateHi = range.hi;
-  s.targetRate = Number(((range.lo + range.hi) / 2).toFixed(2));
-  s.phase = p.goal;
-  const pfc = computePFC(p.goal, s.calories, vals.weight);
-  s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
-  saveData(DATA);
-}
-
-function changeGoal(newGoal){
-  const s = DATA.state;
-  DATA.profile.goal = newGoal;
-  s.phase = newGoal;
-  if(DATA.aiMode){
-    const bf = latestBF();
-    const range = phaseRange(newGoal, bf, DATA.settings);
-    s.calories = Math.round(s.tdee * range.calMultiplier);
-    s.targetRateLo = range.lo;
-    s.targetRateHi = range.hi;
-    s.targetRate = Number(((range.lo + range.hi) / 2).toFixed(2));
-    const pfc = computePFC(newGoal, s.calories, latestWeight());
-    s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
-  }
-  // manual mode: leave the user's own calories/PFC entries untouched
-  saveData(DATA);
-}
-
-// Toggle AI mode. Switching to AI: recompute calories/PFC/target-range from
-// the current TDEE, goal and body-fat so the AI takes over from an
-// up-to-date baseline. Switching to manual: restore the user's own
-// last-saved manual calories/PFC (DATA.manualMacros) if any exist, so that
-// OFF(1) -> ON -> OFF(2) shows OFF(1)'s values again rather than whatever
-// the AI last set. If no manual entry was ever saved, the current
-// values(AI's) simply become the starting point to edit from.
-function toggleAiMode(newMode){
-  DATA.aiMode = newMode;
-  const s = DATA.state;
-  if(newMode){
-    const bf = latestBF();
-    const range = phaseRange(DATA.profile.goal, bf, DATA.settings);
-    s.targetRateLo = range.lo;
-    s.targetRateHi = range.hi;
-    s.targetRate = Number(((range.lo + range.hi) / 2).toFixed(2));
-    s.calories = Math.round(s.tdee * range.calMultiplier);
-    const pfc = computePFC(DATA.profile.goal, s.calories, latestWeight());
-    s.protein = pfc.protein; s.fat = pfc.fat; s.carb = pfc.carb;
-  } else if(DATA.manualMacros){
-    s.calories = DATA.manualMacros.calories;
-    s.protein = DATA.manualMacros.protein;
-    s.fat = DATA.manualMacros.fat;
-    s.carb = DATA.manualMacros.carb;
-  }
-  saveData(DATA);
-}
-
-function checkPhaseEnd(bf){
-  const g = DATA.profile.goal;
-  if(g === 'bulk' && bf >= DATA.settings.bulkEndBf) return `体脂肪率が${DATA.settings.bulkEndBf}%に到達しました。増量終了のタイミングを検討してください。`;
-  if(g === 'cut' && bf <= DATA.settings.competitionBf) return `体脂肪率が目標の${DATA.settings.competitionBf}%に到達しました。減量終了のタイミングを検討してください。`;
-  if(g === 'minicut' && bf <= DATA.settings.miniCutTarget) return `体脂肪率が目標の${DATA.settings.miniCutTarget}%に到達しました。ミニカット終了のタイミングを検討してください。`;
-  return null;
-}
-
-function todayStr(){
-  const d = new Date();
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-
-/* ---------- AI coaching text ---------- */
-
-// Manual-mode status message: no API call, just a deterministic summary of
-// what the TDEE re-estimation did this week.
-function buildManualStatusMessage(context){
-  let msg = `週間体重変化率は${context.avgs.weeklyRate.toFixed(2)}%/weekでした。入力されているカロリー(${context.entry.calories}kcal)と体重推移をもとに、推定TDEEを${context.entry.tdee}kcalに更新しました。`;
-  if(context.phaseEndNote) msg += ' ' + context.phaseEndNote;
-  return msg;
-}
-
-async function generateCoachingMessage(context){
-  if(!DATA.aiMode){
-    return buildManualStatusMessage(context);
-  }
-  const goalLabel = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[DATA.profile.goal];
-  const sys = `あなたはボディビルダー専属の栄養コーチです。渡された数値データだけをもとに、今週ユーザーが何をすべきかを日本語で2〜4文、具体的かつ簡潔に指示してください。数値の再計算はせず、渡された数値をそのまま根拠として使ってください。丁寧だが端的なコーチの口調で。マークダウンや箇条書きは使わないでください。`;
-
-  const u = `フェーズ: ${goalLabel}
-現在の体脂肪率: ${context.bf}%
-今週の7日平均体重: ${context.avgs.currentAvg.toFixed(2)}kg
-前週の7日平均体重: ${context.avgs.prevAvg ? context.avgs.prevAvg.toFixed(2) : 'ー'}kg
-週間体重変化率: ${context.avgs.weeklyRate.toFixed(2)}%/week
-今週の目標範囲: ${context.entry.targetRateLo}%〜${context.entry.targetRateHi}%/week
-AIが範囲内で選んだ今週の目標値: ${context.entry.targetRate}%/week (理由: ${context.entry.rationale || 'ー'})
-今週とった処置: ${context.entry.action === 'maintain' ? 'カロリー維持' : context.entry.action === 'decrease' ? 'カロリーを減らした' : 'カロリーを増やした'}${context.entry.forcedReset ? '(体脂肪率の閾値を超えたためフェーズのカロリーと目標範囲を切り替えた)' : ''}
-現在の摂取カロリー: ${context.entry.calories}kcal
-推定TDEE: ${context.entry.tdee}kcal
-PFC: P${DATA.state.protein}g / F${DATA.state.fat}g / C${DATA.state.carb}g
-${context.phaseEndNote ? '注意: ' + context.phaseEndNote : ''}`;
-
-  try{
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: apiHeaders(),
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 400,
-          system: sys,
-          messages: [{ role: "user", content: u }]
-        })
-      });
-      const data = await response.json();
-      const text = (data.content || []).map(c=>c.text||'').join('').trim();
-      if(text) return text;
-    }catch(e){ /* fall through to template */ }
-
-  // deterministic fallback if the call fails
-  let msg = '';
-  if(context.entry.action === 'maintain'){
-    msg = `週間体重変化率は${context.avgs.weeklyRate.toFixed(2)}%/weekで、今週の目標(${context.entry.targetRate}%/week、範囲${context.entry.targetRateLo}〜${context.entry.targetRateHi}%/week)に近い状態です。現在の摂取カロリー(${context.entry.calories}kcal)を維持してください。`;
-  } else if(context.entry.action === 'decrease'){
-    msg = `週間体重変化率が${context.avgs.weeklyRate.toFixed(2)}%/weekと目標(${context.entry.targetRate}%/week)より速いペースです。摂取カロリーを${context.entry.calories}kcalまで引き下げました。`;
-  } else {
-    msg = `週間体重変化率が${context.avgs.weeklyRate.toFixed(2)}%/weekと目標(${context.entry.targetRate}%/week)より遅いペースです。摂取カロリーを${context.entry.calories}kcalまで引き上げました。`;
-  }
-  if(context.entry.forcedReset){
-    msg += ` 体脂肪率が${context.bf}%になり閾値を超えたため、フェーズの基準カロリーと目標範囲(${context.entry.targetRateLo}〜${context.entry.targetRateHi}%/week)を切り替えました。`;
-  }
-  if(context.phaseEndNote) msg += ' ' + context.phaseEndNote;
-  return msg;
-}
-
-/* ---------- rendering ---------- */
-
-function el(html){
-  const t = document.createElement('template');
-  t.innerHTML = html.trim();
-  return t.content.firstElementChild;
-}
-
-function render(){
-  const app = document.getElementById('app');
-  const footerNav = document.getElementById('footerNav');
-  if(!DATA){
-    footerNav.classList.add('hidden');
-    app.innerHTML = '';
-    app.appendChild(renderOnboarding());
-    return;
-  }
-  footerNav.classList.remove('hidden');
-  document.querySelectorAll('.nav-btn').forEach(b=>{
-    b.classList.toggle('active', b.dataset.view === currentView);
-  });
-  app.innerHTML = '';
-  app.appendChild(renderTopbar());
-  const wrap = el('<div class="wrap"></div>');
-  if(currentView === 'dashboard') wrap.appendChild(renderDashboard());
-  if(currentView === 'log') wrap.appendChild(renderLogView());
-  if(currentView === 'charts') wrap.appendChild(renderChartsView());
-  if(currentView === 'settings') wrap.appendChild(renderSettingsView());
-  app.appendChild(wrap);
-}
-
-function renderTopbar(){
-  const goalLabel = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[DATA.profile.goal];
-  const bar = el(`<div class="topbar">
-    <div class="brand"><span class="mark"></span><h1>IRON LOG</h1></div>
-    <div class="phase-badge ${DATA.profile.goal==='bulk'?'bulk':'cut'}">${goalLabel}フェーズ</div>
-  </div>`);
-  return bar;
-}
-
-/* ---- onboarding ---- */
-function renderOnboarding(){
-  const container = el(`<div class="wrap onboard">
-    <div class="onboard-hero">
-      <div class="kicker">INITIAL SETUP</div>
-      <h2>まず、あなたの数字を教えてください。</h2>
-      <p>年齢・身長・現在の体重と体脂肪率から初期TDEEを推定し、目的に応じた摂取カロリーとPFCを自動で設定します。以降は毎朝の体重・体脂肪率の2つだけ記録すれば、AIが毎週の調整を指示します。</p>
-    </div>
-    <form id="onboardForm"></form>
-  </div>`);
-
-  const form = container.querySelector('#onboardForm');
-  const state = { gender:'male', activity:'medium', goal:'bulk' };
-
-  form.appendChild(el(`
-    <div class="field"><label>年齢</label><input type="number" id="f_age" min="14" max="80" required></div>
-  `));
-  form.appendChild(el(`
-    <div class="field"><label>性別</label>
-      <div class="choice-group two" id="genderGroup">
-        <button type="button" class="choice-btn active" data-val="male">男性</button>
-        <button type="button" class="choice-btn" data-val="female">女性</button>
-      </div>
-    </div>
-  `));
-  form.appendChild(el(`
-    <div class="row2">
-      <div class="field"><label>身長 (cm)</label><input type="number" id="f_height" step="0.1" required></div>
-      <div class="field"><label>現在の体重 (kg)</label><input type="number" id="f_weight" step="0.1" required></div>
-    </div>
-  `));
-  form.appendChild(el(`
-    <div class="field"><label>現在の体脂肪率 (%)</label><input type="number" id="f_bf" step="0.1" required></div>
-  `));
-  form.appendChild(el(`
-    <div class="field"><label>週間の運動量</label>
-      <div class="choice-group" id="activityGroup">
-        <button type="button" class="choice-btn" data-val="low">Low</button>
-        <button type="button" class="choice-btn active" data-val="medium">Medium</button>
-        <button type="button" class="choice-btn" data-val="high">High</button>
-      </div>
-    </div>
-  `));
-  form.appendChild(el(`
-    <div class="field"><label>目的</label>
-      <div class="choice-group" id="goalGroup">
-        <button type="button" class="choice-btn active" data-val="bulk">増量</button>
-        <button type="button" class="choice-btn" data-val="cut">減量</button>
-        <button type="button" class="choice-btn" data-val="minicut">ミニカット</button>
-      </div>
-      <div class="hint">目標の体重変化率は固定値ではなく範囲で自動設定され、体脂肪率の推移に応じてAIが範囲内で毎週の目標値を選びます。細かい閾値は登録後に設定画面から調整できます。</div>
-    </div>
-  `));
-
-  form.appendChild(el(`
-    <div class="field"><label>推定TDEE (kcal・任意)</label><input type="number" id="f_tdee" step="1" placeholder="他アプリ等で把握している場合のみ入力">
-      <div class="hint">未入力の場合は年齢・身長・体重・運動量から自動計算します。他で測定済みのTDEEが分かる場合はここに入力すると、その値を優先して使います。</div>
-    </div>
-  `));
-
-  form.querySelector('#genderGroup').addEventListener('click', e=>{
-    const btn = e.target.closest('.choice-btn'); if(!btn) return;
-    state.gender = btn.dataset.val;
-    [...btn.parentElement.children].forEach(c=>c.classList.remove('active'));
-    btn.classList.add('active');
-  });
-  form.querySelector('#activityGroup').addEventListener('click', e=>{
-    const btn = e.target.closest('.choice-btn'); if(!btn) return;
-    state.activity = btn.dataset.val;
-    [...btn.parentElement.children].forEach(c=>c.classList.remove('active'));
-    btn.classList.add('active');
-  });
-  form.querySelector('#goalGroup').addEventListener('click', e=>{
-    const btn = e.target.closest('.choice-btn'); if(!btn) return;
-    state.goal = btn.dataset.val;
-    [...btn.parentElement.children].forEach(c=>c.classList.remove('active'));
-    btn.classList.add('active');
-  });
-
-  form.appendChild(el(`<button type="submit" class="btn-primary">初期プランを計算する</button>`));
-
-  form.addEventListener('submit', (e)=>{
-    e.preventDefault();
-    const ageVal = form.querySelector('#f_age').value;
-    const heightVal = form.querySelector('#f_height').value;
-    const weightVal = form.querySelector('#f_weight').value;
-    const bfVal = form.querySelector('#f_bf').value;
-    if(ageVal === '' || heightVal === '' || weightVal === '' || bfVal === ''){
-      alert('年齢・身長・体重・体脂肪率をすべて入力してください。');
-      return;
-    }
-    const profile = {
-      age: Number(ageVal),
-      gender: state.gender,
-      height: Number(heightVal),
-      weight: Number(weightVal),
-      bodyFat: Number(bfVal),
-      activity: state.activity,
-      goal: state.goal
-    };
-    if(Object.values(profile).some(v => typeof v === 'number' && isNaN(v))){
-      alert('数値の入力に誤りがあります。半角数字で入力してください。');
-      return;
-    }
-    // Sensible built-in defaults for phase-end / switch thresholds — no manual
-    // entry at registration. Adjustable later from the settings screen.
-    const settings = { cutThreshold: 10, bulkEndBf: 16, competitionBf: 8, miniCutTarget: 8 };
-
-    const tdeeVal = form.querySelector('#f_tdee').value;
-    const manualTdee = tdeeVal !== '' ? Number(tdeeVal) : null;
-    if(manualTdee !== null && (isNaN(manualTdee) || manualTdee <= 0)){
-      alert('推定TDEEは正の数値で入力してください。分からない場合は空欄のままで構いません。');
-      return;
-    }
-    const tdee = manualTdee !== null ? manualTdee : computeInitialTDEE(profile);
-    const range = phaseRange(profile.goal, profile.bodyFat, settings);
-    const calories = Math.round(tdee * range.calMultiplier);
-    const pfc = computePFC(profile.goal, calories, profile.weight);
-    const midRate = Number(((range.lo + range.hi) / 2).toFixed(2));
-
-    DATA = {
-      profile, settings, aiMode: true,
-      state: {
-        tdee, calories,
-        targetRate: midRate, targetRateLo: range.lo, targetRateHi: range.hi,
-        protein: pfc.protein, fat: pfc.fat, carb: pfc.carb,
-        phase: profile.goal,
-        lastAdjustmentDate: null
-      },
-      logs: [{ date: todayStr(), weight: profile.weight, bodyFat: profile.bodyFat }],
-      adjustmentLog: [],
-      coachingLog: []
-    };
-    if(!saveData(DATA)){ DATA = null; return; }
-    currentView = 'dashboard';
-    render();
-  });
-
-  return container;
-}
-
-/* ---- dashboard ---- */
-function renderDashboard(){
-  const c = el('<div class="dash"></div>');
-  const avgs = computeAverages();
-  const bf = latestBF();
-  const s = DATA.state;
-
-  // coaching hero card
-  const lastCoaching = DATA.coachingLog[DATA.coachingLog.length-1];
-  const canRunWeekly = avgs && avgs.weeklyRate !== null && (!s.lastAdjustmentDate || daysBetween(s.lastAdjustmentDate, todayStr()) >= 7);
-
-  const cardTitle = DATA.aiMode ? '今週のAI指示' : '今週の更新状況';
-  const emptyMsg = DATA.aiMode
-    ? '「更新」を押すと、今週のデータをもとにAIが指示を出します。'
-    : '「更新」を押すと、入力済みのカロリーと体重推移をもとに推定TDEEを更新します。';
-  const card = el(`<div class="coach-card">
-    <div class="kicker"><span>${cardTitle}</span><span class="date">${lastCoaching ? lastCoaching.date : ''}</span></div>
-    <p id="coachText">${lastCoaching ? escapeHtml(lastCoaching.message) : (avgs && avgs.weeklyRate !== null ? emptyMsg : 'データが7日分たまるまでは1日ごとの体重を記録してください。7日平均が出てから週間の更新が始まります。')}</p>
-    <div class="refresh-row">
-      <button class="link-btn" id="refreshCoach">${canRunWeekly ? '今週の指示を更新' : (avgs && avgs.weeklyRate !== null ? '前回の更新から7日未満です' : '')}</button>
-    </div>
-  </div>`);
-  if(!canRunWeekly) card.querySelector('#refreshCoach').setAttribute('disabled','disabled');
-  card.querySelector('#refreshCoach').addEventListener('click', async ()=>{
-    const button = card.querySelector('#refreshCoach');
-    button.textContent = '分析中…';
-    button.setAttribute('disabled','disabled');
-    const result = await runWeeklyEngine();
-    if(result){
-      const phaseEndNote = checkPhaseEnd(result.bf);
-      const message = await generateCoachingMessage({...result, phaseEndNote});
-      DATA.coachingLog.push({ date: todayStr(), message });
-      saveData(DATA);
-      render();
-    }
-  });
-  c.appendChild(card);
-
-  // stat grid
-  const weeklyRateStr = avgs && avgs.weeklyRate !== null ? `${avgs.weeklyRate>0?'+':''}${avgs.weeklyRate.toFixed(2)}<small>%/週</small>` : '―';
-  const weeklyClass = avgs && avgs.weeklyRate !== null ? (avgs.weeklyRate >= 0 ? 'pos' : 'neg') : '';
-  const targetStatHtml = DATA.aiMode
-    ? `<div class="stat"><div class="label">今週の目標(AI選定)</div><div class="value">${s.targetRate>0?'+':''}${s.targetRate}<small>%/週</small></div><div class="sub">範囲 ${s.targetRateLo}〜${s.targetRateHi}%/週</div></div>`
-    : '';
-  const grid = el(`<div class="stat-grid">
-    <div class="stat"><div class="label">今日の体重</div><div class="value">${latestWeight().toFixed(1)}<small>kg</small></div></div>
-    <div class="stat"><div class="label">今日の体脂肪率</div><div class="value">${bf.toFixed(1)}<small>%</small></div></div>
-    <div class="stat"><div class="label">今週7日平均</div><div class="value">${avgs ? avgs.currentAvg.toFixed(2) : '―'}<small>${avgs?'kg':''}</small></div></div>
-    <div class="stat"><div class="label">前週7日平均</div><div class="value">${avgs && avgs.prevAvg ? avgs.prevAvg.toFixed(2) : '―'}<small>${avgs&&avgs.prevAvg?'kg':''}</small></div></div>
-    <div class="stat"><div class="label">週間体重変化率</div><div class="value ${weeklyClass}">${weeklyRateStr}</div></div>
-    ${targetStatHtml}
-    <div class="stat"><div class="label">推定TDEE</div><div class="value">${s.tdee}<small>kcal</small></div></div>
-    <div class="stat"><div class="label">現在の摂取カロリー</div><div class="value">${s.calories}<small>kcal</small></div></div>
-  </div>`);
-  c.appendChild(grid);
-
-  const pfc = el(`<div class="pfc-row">
-    <div class="pfc-item"><div class="label">PROTEIN</div><div class="value">${s.protein}g</div></div>
-    <div class="pfc-item"><div class="label">FAT</div><div class="value">${s.fat}g</div></div>
-    <div class="pfc-item"><div class="label">CARB</div><div class="value">${s.carb}g</div></div>
-  </div>`);
-  c.appendChild(pfc);
-
-  return c;
-}
-
-function daysBetween(a,b){
-  const d1 = new Date(a), d2 = new Date(b);
-  return Math.round((d2-d1)/86400000);
-}
-function escapeHtml(str){
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
-}
-
-/* ---- log entry view ---- */
-function renderLogView(){
-  const c = el('<div class="dash"></div>');
-  c.appendChild(el('<div class="section-title">毎日の記録</div>'));
-
-  const todayLog = DATA.logs.find(l=>l.date === todayStr());
-  const form = el(`<form class="log-form">
-    <div class="field"><label>日付</label><input type="date" id="l_date" value="${todayStr()}" max="${todayStr()}"></div>
-    <div class="row2">
-      <div class="field"><label>体重 (kg)</label><input type="number" step="0.1" id="l_weight" value="${todayLog?todayLog.weight:''}" required></div>
-      <div class="field"><label>体脂肪率 (%)</label><input type="number" step="0.1" id="l_bf" value="${todayLog?todayLog.bodyFat:''}" required></div>
-    </div>
-    <button type="submit" class="btn-primary">記録を保存</button>
-  </form>`);
-
-  form.addEventListener('submit', e=>{
-    e.preventDefault();
-    const date = form.querySelector('#l_date').value || todayStr();
-    const weight = Number(form.querySelector('#l_weight').value);
-    const bodyFat = Number(form.querySelector('#l_bf').value);
-    const entry = { date, weight, bodyFat };
-
-    const idx = DATA.logs.findIndex(l=>l.date === date);
-    if(idx >= 0) DATA.logs[idx] = entry; else DATA.logs.push(entry);
-    saveData(DATA);
-    currentView = 'dashboard';
-    render();
-  });
-  c.appendChild(form);
-  c.appendChild(el(`<div class="hint">体重は起床後・トイレ後・飲食前など、毎日同じ条件で測定してください。体脂肪率は1日の数値だけで判断せず、推移で見ます。</div>`));
-
-  // recent entries
-  const logs = sortedLogs().slice(-10).reverse();
-  if(logs.length){
-    c.appendChild(el('<div class="section-title">直近の記録</div>'));
-    const list = el('<div></div>');
-    logs.forEach(l=>{
-      list.appendChild(el(`<div class="stat" style="border:1px solid var(--border);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-        <div class="sub">${l.date}</div>
-        <div class="sub">${l.weight}kg ・ ${l.bodyFat}%</div>
-      </div>`));
-    });
-    c.appendChild(list);
-  }
-
-  return c;
-}
-
-/* ---- charts view ---- */
-let chartInstance = null;
-function renderChartsView(){
-  const c = el('<div class="dash"></div>');
-  const tabs = el(`<div class="tabs">
-    <div class="tab" data-t="weight">体重</div>
-    <div class="tab" data-t="bodyfat">体脂肪率</div>
-    <div class="tab" data-t="leanmass">除脂肪体重</div>
-    <div class="tab" data-t="calorie">カロリー</div>
-  </div>`);
-  [...tabs.children].forEach(t=>{
-    if(t.dataset.t === chartTab) t.classList.add('active');
-    t.addEventListener('click', ()=>{ chartTab = t.dataset.t; render(); });
-  });
-  c.appendChild(tabs);
-
-  const box = el('<div class="chart-box"><canvas id="mainChart"></canvas></div>');
-  c.appendChild(box);
-
-  setTimeout(()=>drawChart(), 0);
-
-  // body-fat-%-target simulator
-  const sim = computeBfSimulation();
-  c.appendChild(el('<div class="section-title">体脂肪率シミュレーター</div>'));
-  if(!sim){
-    c.appendChild(el(`<div class="settings-block hint">体重・体脂肪率を14日分(2週間)以上記録すると、直近の推移から目標体脂肪率までの到達予測が表示されます。</div>`));
-  } else {
-    const goalLabel = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[sim.goal];
-    if(!sim.possible){
-      c.appendChild(el(`<div class="settings-block hint">直近${sim.weeksSpan}週間の推移(週あたり${sim.bfRatePerWeek>0?'+':''}${sim.bfRatePerWeek.toFixed(2)}%)では、${goalLabel}の目標体脂肪率${sim.targetBf}%への到達を見込めていません。現在${sim.currentBf.toFixed(1)}%です。</div>`));
-    } else {
-      const rowsHtml = sim.rows.map(r=>`<tr><td>${r.week}週後</td><td>${r.date}</td><td>${r.bf}%</td></tr>`).join('');
-      c.appendChild(el(`<div class="settings-block">
-        <div class="hint" style="margin-bottom:10px;">直近${sim.weeksSpan}週間の推移(週あたり${sim.bfRatePerWeek>0?'+':''}${sim.bfRatePerWeek.toFixed(2)}%)が続いた場合の、${goalLabel}目標体脂肪率${sim.targetBf}%までの予測です。現在${sim.currentBf.toFixed(1)}%。</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-          <thead><tr style="color:var(--text-muted);text-align:left;border-bottom:1px solid var(--border);">
-            <th style="padding:6px 4px;">経過</th><th style="padding:6px 4px;">予測日</th><th style="padding:6px 4px;">予測体脂肪率</th>
-          </tr></thead>
-          <tbody style="color:var(--text);">${rowsHtml}</tbody>
-        </table>
-      </div>`));
-    }
-  }
-
-  return c;
-}
-
-function drawChart(){
-  const canvas = document.getElementById('mainChart');
-  if(!canvas || typeof Chart === 'undefined') return;
-  if(chartInstance) chartInstance.destroy();
-
-  const logs = sortedLogs();
-  let labels = logs.map(l=>l.date.slice(5));
-
-  const gridColor = 'rgba(255,255,255,0.06)';
-  const textColor = '#8B8E96';
-  const baseOpts = {
-    responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{ labels:{ color:'#F1EEE7', font:{size:11} } } },
-    scales:{
-      x:{ ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor } },
-      y:{ ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor } }
-    }
-  };
-
-  let datasets = [];
-  if(chartTab === 'weight'){
-    const rolling = logs.map((l,i)=>{
-      if(i < 6) return null;
-      const slice = logs.slice(i-6, i+1);
-      return avg(slice.map(x=>x.weight));
-    });
-    datasets = [
-      { label:'体重', data: logs.map(l=>l.weight), borderColor:'#E3A93B', backgroundColor:'transparent', tension:0.25, pointRadius:2 },
-      { label:'7日平均', data: rolling, borderColor:'#5C9B6E', backgroundColor:'transparent', tension:0.25, pointRadius:0, borderWidth:2 }
-    ];
-    chartInstance = new Chart(canvas, { type:'line', data:{ labels, datasets }, options: baseOpts });
-  } else if(chartTab === 'bodyfat'){
-    datasets = [
-      { label:'体脂肪率', data: logs.map(l=>l.bodyFat), borderColor:'#C1584B', backgroundColor:'transparent', tension:0.25, pointRadius:2 }
-    ];
-    chartInstance = new Chart(canvas, { type:'line', data:{ labels, datasets }, options: baseOpts });
-  } else if(chartTab === 'leanmass'){
-    datasets = [
-      { label:'除脂肪体重', data: logs.map(l=> Number((l.weight * (1 - l.bodyFat/100)).toFixed(1))), borderColor:'#5C9B6E', backgroundColor:'transparent', tension:0.25, pointRadius:2 }
-    ];
-    chartInstance = new Chart(canvas, { type:'line', data:{ labels, datasets }, options: baseOpts });
-  } else if(chartTab === 'calorie'){
-    // The prescribed calorie value only changes on weekly-adjustment dates,
-    // so plotting it against every daily log date makes the line mostly
-    // gaps. Instead, plot only the adjustment-log dates directly, as a
-    // stepped/filled line — this reads much more clearly as "what my
-    // calories were set to, and when it changed".
-    const adj = (DATA.adjustmentLog || []).slice().sort((a,b)=>a.date.localeCompare(b.date));
-    const calLabels = adj.map(a=>a.date.slice(5));
-    const calValues = adj.map(a=>a.calories);
-    const calOpts = {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
-      scales:{
-        x:{ ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor } },
-        y:{ ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor }, suggestedMin: calValues.length ? Math.min(...calValues) - 150 : undefined, suggestedMax: calValues.length ? Math.max(...calValues) + 150 : undefined }
-      }
-    };
-    chartInstance = new Chart(canvas, {
-      type: 'line',
-      data: {
-        labels: calLabels,
-        datasets: [{
-          label: '摂取カロリー',
-          data: calValues,
-          borderColor: '#E3A93B',
-          backgroundColor: 'rgba(227,169,59,0.15)',
-          fill: true,
-          stepped: 'before',
-          tension: 0,
-          pointRadius: 4,
-          pointBackgroundColor: '#E3A93B',
-          pointBorderColor: '#0E0F12',
-          pointBorderWidth: 1,
-          borderWidth: 2.5
-        }]
-      },
-      options: calOpts
-    });
-  }
-}
-
-/* ---- settings view ---- */
-function renderSettingsView(){
-  const c = el('<div class="dash"></div>');
-
-  c.appendChild(el('<div class="section-title">プロフィール</div>'));
-  const p = DATA.profile;
-  const editState = { gender: p.gender, activity: p.activity };
-  const profileForm = el(`<form class="settings-block" id="profileForm">
-    <div class="field"><label>年齢</label><input type="number" id="s_p_age" min="14" max="80" value="${p.age}" required></div>
-    <div class="field" style="margin-top:12px;"><label>性別</label>
-      <div class="choice-group two" id="s_p_genderGroup">
-        <button type="button" class="choice-btn ${p.gender==='male'?'active':''}" data-val="male">男性</button>
-        <button type="button" class="choice-btn ${p.gender==='female'?'active':''}" data-val="female">女性</button>
-      </div>
-    </div>
-    <div class="row2" style="margin-top:12px;">
-      <div class="field"><label>身長 (cm)</label><input type="number" id="s_p_height" step="0.1" value="${p.height}" required></div>
-      <div class="field"><label>体重 (kg)</label><input type="number" id="s_p_weight" step="0.1" value="${latestWeight()}" required></div>
-    </div>
-    <div class="field" style="margin-top:12px;"><label>体脂肪率 (%)</label><input type="number" id="s_p_bf" step="0.1" value="${latestBF()}" required></div>
-    <div class="field" style="margin-top:12px;"><label>週間の運動量</label>
-      <div class="choice-group" id="s_p_activityGroup">
-        <button type="button" class="choice-btn ${p.activity==='low'?'active':''}" data-val="low">Low</button>
-        <button type="button" class="choice-btn ${p.activity==='medium'?'active':''}" data-val="medium">Medium</button>
-        <button type="button" class="choice-btn ${p.activity==='high'?'active':''}" data-val="high">High</button>
-      </div>
-    </div>
-    <div class="hint" style="margin-top:10px;">保存すると、推定TDEE・摂取カロリー・PFC・今週の目標範囲がこの内容で再計算されます。体重・体脂肪率は本日の記録として反映されます。</div>
-    <button type="submit" class="btn-secondary" style="margin-top:14px;">プロフィールを保存</button>
-  </form>`);
-  profileForm.querySelector('#s_p_genderGroup').addEventListener('click', e=>{
-    const btn = e.target.closest('.choice-btn'); if(!btn) return;
-    editState.gender = btn.dataset.val;
-    [...btn.parentElement.children].forEach(ch=>ch.classList.remove('active'));
-    btn.classList.add('active');
-  });
-  profileForm.querySelector('#s_p_activityGroup').addEventListener('click', e=>{
-    const btn = e.target.closest('.choice-btn'); if(!btn) return;
-    editState.activity = btn.dataset.val;
-    [...btn.parentElement.children].forEach(ch=>ch.classList.remove('active'));
-    btn.classList.add('active');
-  });
-  profileForm.addEventListener('submit', e=>{
-    e.preventDefault();
-    const ageVal = profileForm.querySelector('#s_p_age').value;
-    const heightVal = profileForm.querySelector('#s_p_height').value;
-    const weightVal = profileForm.querySelector('#s_p_weight').value;
-    const bfVal = profileForm.querySelector('#s_p_bf').value;
-    if(ageVal === '' || heightVal === '' || weightVal === '' || bfVal === ''){
-      alert('すべての項目を入力してください。');
-      return;
-    }
-    const vals = {
-      age: Number(ageVal), height: Number(heightVal),
-      weight: Number(weightVal), bodyFat: Number(bfVal),
-      gender: editState.gender, activity: editState.activity
-    };
-    if(Object.values(vals).some(v => typeof v === 'number' && isNaN(v))){
-      alert('数値の入力に誤りがあります。半角数字で入力してください。');
-      return;
-    }
-    updateProfileBasics(vals);
-    render();
-  });
-  c.appendChild(profileForm);
-
-  c.appendChild(el('<div class="section-title">目的の変更</div>'));
-  const goalBlock = el(`<div class="settings-block">
-    <div class="choice-group" id="goalChangeGroup">
-      <button type="button" class="choice-btn ${p.goal==='bulk'?'active':''}" data-val="bulk">増量</button>
-      <button type="button" class="choice-btn ${p.goal==='cut'?'active':''}" data-val="cut">減量</button>
-      <button type="button" class="choice-btn ${p.goal==='minicut'?'active':''}" data-val="minicut">ミニカット</button>
-    </div>
-    <div class="hint" style="margin-top:10px;">目的を変更すると、現在の体脂肪率と推定TDEEをもとに摂取カロリー・PFC・今週の目標範囲が再計算されます。</div>
-    <button type="button" class="btn-secondary" id="saveGoal" style="margin-top:14px;">目的を変更する</button>
-  </div>`);
-  let selectedGoal = p.goal;
-  goalBlock.querySelector('#goalChangeGroup').addEventListener('click', e=>{
-    const btn = e.target.closest('.choice-btn'); if(!btn) return;
-    selectedGoal = btn.dataset.val;
-    [...btn.parentElement.children].forEach(ch=>ch.classList.remove('active'));
-    btn.classList.add('active');
-  });
-  goalBlock.querySelector('#saveGoal').addEventListener('click', ()=>{
-    if(selectedGoal === p.goal) return;
-    const label = {bulk:'増量',cut:'減量',minicut:'ミニカット'}[selectedGoal];
-    if(confirm(`目的を「${label}」に変更しますか？摂取カロリーとPFCが再計算されます。`)){
-      changeGoal(selectedGoal);
-      render();
-    }
-  });
-  c.appendChild(goalBlock);
-
-  c.appendChild(el('<div class="section-title">AIモード</div>'));
-  const aiBlock = el(`<div class="settings-block">
-    <div class="choice-group two" id="aiModeGroup">
-      <button type="button" class="choice-btn ${DATA.aiMode?'active':''}" data-val="on">ON</button>
-      <button type="button" class="choice-btn ${!DATA.aiMode?'active':''}" data-val="off">OFF</button>
-    </div>
-    <div class="hint" style="margin-top:10px;">ONの場合、AIが週次で摂取カロリーとPFCを自動設定します。OFFの場合、摂取カロリーとPFCはこの画面で手入力します。どちらの場合も、推定TDEEは体重の推移をもとに自動で更新され続けます。</div>
-  </div>`);
-  aiBlock.querySelector('#aiModeGroup').addEventListener('click', e=>{
-    const btn = e.target.closest('.choice-btn'); if(!btn) return;
-    const newMode = btn.dataset.val === 'on';
-    if(newMode === DATA.aiMode) return;
-    const label = newMode ? 'ON' : 'OFF';
-    if(confirm(`AIモードを${label}に切り替えますか？`)){
-      toggleAiMode(newMode);
-      render();
-    }
-  });
-  c.appendChild(aiBlock);
-
-  if(!DATA.aiMode){
-    c.appendChild(el('<div class="section-title">カロリー・マクロ設定 (手入力)</div>'));
-    const s = DATA.state;
-    const macroForm = el(`<form class="settings-block" id="macroForm">
-      <div class="field"><label>摂取カロリー (kcal)</label><input type="number" id="m_cal" value="${s.calories}" required></div>
-      <div class="row2" style="margin-top:12px;">
-        <div class="field"><label>タンパク質 (g)</label><input type="number" id="m_p" value="${s.protein}" required></div>
-        <div class="field"><label>脂質 (g)</label><input type="number" id="m_f" value="${s.fat}" required></div>
-      </div>
-      <div class="field" style="margin-top:12px;"><label>炭水化物 (g)</label><input type="number" id="m_c" value="${s.carb}" required></div>
-      <div class="hint" style="margin-top:10px;">この値がそのまま摂取カロリー・PFCとして使われます。推定TDEEは、このカロリーと体重推移をもとに引き続き自動更新されます。</div>
-      <button type="submit" class="btn-secondary" style="margin-top:14px;">保存</button>
-    </form>`);
-    macroForm.addEventListener('submit', e=>{
-      e.preventDefault();
-      const calVal = Number(macroForm.querySelector('#m_cal').value);
-      const pVal = Number(macroForm.querySelector('#m_p').value);
-      const fVal = Number(macroForm.querySelector('#m_f').value);
-      const cVal = Number(macroForm.querySelector('#m_c').value);
-      if([calVal,pVal,fVal,cVal].some(v=>isNaN(v) || v < 0)){
-        alert('数値を正しく入力してください。');
-        return;
-      }
-      s.calories = Math.round(calVal);
-      s.protein = Math.round(pVal);
-      s.fat = Math.round(fVal);
-      s.carb = Math.round(cVal);
-      DATA.manualMacros = { calories: s.calories, protein: s.protein, fat: s.fat, carb: s.carb };
-      saveData(DATA);
-      render();
-    });
-    c.appendChild(macroForm);
-  }
-
-  const danger = el('<div class="danger-zone"><button id="resetAll">すべてのデータを削除してリセット</button></div>');
-  danger.querySelector('#resetAll').addEventListener('click', ()=>{
-    if(confirm('本当にすべてのデータを削除しますか？この操作は取り消せません。')){
-      localStorage.removeItem(STORE_KEY);
-      DATA = null;
-      currentView = 'dashboard';
-      render();
-    }
-  });
-  c.appendChild(danger);
-
-  return c;
-}
-
-/* ---------- nav wiring ---------- */
-document.getElementById('footerNav').addEventListener('click', (e)=>{
-  const btn = e.target.closest('.nav-btn');
-  if(!btn) return;
-  currentView = btn.dataset.view;
-  render();
-});
-
-render();
-</script>
-</body>
-</html>
+.danger-zone{
+  margin-top:30
